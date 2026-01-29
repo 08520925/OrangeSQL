@@ -1,0 +1,9 @@
+# Wails build artifacts
+OrangeSQL/build/bin
+
+# Frontend
+OrangeSQL/frontend/dist
+OrangeSQL/frontend/node_modules
+
+# Local database
+OrangeSQL/test.db
