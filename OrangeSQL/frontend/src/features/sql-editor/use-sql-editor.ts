@@ -1,51 +1,77 @@
-import { ref, onMounted, onBeforeUnmount, type Ref } from "vue";
-import * as monaco from "monaco-editor";
+import { onMounted, onBeforeUnmount, type Ref } from "vue";
+import { EditorView, keymap } from "@codemirror/view";
+import { EditorState } from "@codemirror/state";
+import { sql } from "@codemirror/lang-sql";
+import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import { oneDark } from "@codemirror/theme-one-dark";
+import { syntaxHighlighting, defaultHighlightStyle } from "@codemirror/language";
 import type { SqlEditorApi } from "./types";
 
 /**
- * Monaco Editor を管理する composable。
- * containerRef に渡した要素に Monaco を初期化する。
+ * CodeMirror 6 による SQL エディタを管理する composable。
  */
 export function useSqlEditor(
   containerRef: Ref<HTMLElement | null>,
   onExecute: () => void,
 ): SqlEditorApi {
-  const editorInstance = ref<monaco.editor.IStandaloneCodeEditor | null>(null);
+  let view: EditorView | null = null;
 
   onMounted(() => {
     const el = containerRef.value;
     if (el == null) return;
 
-    const editor = monaco.editor.create(el, {
-      value: "",
-      language: "sql",
-      theme: "vs-dark",
-      automaticLayout: true,
-      minimap: { enabled: false },
-      fontSize: 14,
-      lineNumbers: "on",
-      scrollBeyondLastLine: false,
-      wordWrap: "on",
+    const executeKeymap = keymap.of([
+      {
+        key: "Ctrl-Enter",
+        run: () => {
+          onExecute();
+          return true;
+        },
+      },
+      {
+        key: "Mod-Enter",
+        run: () => {
+          onExecute();
+          return true;
+        },
+      },
+    ]);
+
+    const state = EditorState.create({
+      doc: "",
+      extensions: [
+        executeKeymap,
+        keymap.of([...defaultKeymap, ...historyKeymap]),
+        history(),
+        sql(),
+        oneDark,
+        syntaxHighlighting(defaultHighlightStyle),
+        EditorView.lineWrapping,
+        EditorView.theme({
+          "&": { height: "100%", fontSize: "14px" },
+          ".cm-scroller": { overflow: "auto" },
+          ".cm-content": { fontFamily: "'Consolas', 'Courier New', monospace" },
+        }),
+      ],
     });
 
-    // Ctrl+Enter で実行
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      onExecute();
-    });
-
-    editorInstance.value = editor;
+    view = new EditorView({ state, parent: el });
   });
 
   onBeforeUnmount(() => {
-    editorInstance.value?.dispose();
+    view?.destroy();
+    view = null;
   });
 
   function getValue(): string {
-    return editorInstance.value?.getValue() ?? "";
+    return view?.state.doc.toString() ?? "";
   }
 
-  function setValue(sql: string): void {
-    editorInstance.value?.setValue(sql);
+  function setValue(text: string): void {
+    if (view == null) return;
+    view.dispatch({
+      changes: { from: 0, to: view.state.doc.length, insert: text },
+    });
   }
 
   return { getValue, setValue };
