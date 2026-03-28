@@ -1,1 +1,0 @@
-export { executeSQL } from "./app";

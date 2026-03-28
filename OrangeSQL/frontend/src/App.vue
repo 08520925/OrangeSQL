@@ -1,161 +1,117 @@
+<script setup lang="ts">
+// レイアウト骨格のみ。各機能コンポーネントは Issue #7〜#10 で実装する。
+</script>
+
 <template>
-  <main
-    style="
-      padding: 12px;
-      height: 100vh;
-      box-sizing: border-box;
-      display: grid;
-      grid-template-rows: auto 1fr auto 1fr;
-      gap: 10px;
-    "
-  >
-    <!-- Header -->
-    <header style="display:flex; align-items:center; gap:10px;">
-      <h2 style="margin:0;">OrangeSQL</h2>
-      <button @click="run" :disabled="running">実行</button>
+  <div class="app-layout">
+    <header class="header-bar">
+      <span class="app-name">OrangeSQL</span>
     </header>
-
-    <!-- Error Display -->
-    <div
-      v-if="error"
-      style="
-        background-color: #fff5f5;
-        color: #c53030;
-        border: 1px solid #fed7d7;
-        border-radius: 8px;
-        padding: 12px;
-        white-space: pre-wrap;
-        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      "
-    >
-      <strong>エラー:</strong><br />{{ error }}
-    </div>
-
-    <!-- Monaco Editor -->
-    <div
-      style="
-        border:1px solid #ccc;
-        border-radius:8px;
-        overflow:hidden;
-        height:100%;
-      "
-    >
-      <div ref="editorEl" style="height:100%;"></div>
-    </div>
-
-    <!-- Result summary -->
-    <div style="display:flex; align-items:center; gap:10px;">
-      <div>Rows: {{ result.rows.length }}</div>
-      <div v-if="result.columns.length">
-        Columns: {{ result.columns.join(", ") }}
+    <div class="main-area">
+      <aside class="sidebar">
+        <p class="placeholder">サイドバー（#9 で実装）</p>
+      </aside>
+      <div class="content-area">
+        <div class="editor-area">
+          <p class="placeholder">SQLエディタ（#7 で実装）</p>
+        </div>
+        <div class="results-area">
+          <p class="placeholder">結果パネル（#8 で実装）</p>
+        </div>
+        <div class="status-bar">
+          <span>Ready</span>
+        </div>
       </div>
     </div>
-
-    <!-- Result grid -->
-    <div
-      style="
-        border:1px solid #ccc;
-        border-radius:8px;
-        overflow:auto;
-      "
-    >
-      <table
-        v-if="result.columns.length"
-        style="border-collapse: collapse; width: 100%;"
-      >
-        <thead>
-          <tr>
-            <th
-              v-for="c in result.columns"
-              :key="c"
-              style="
-                position: sticky;
-                top: 0;
-                background: #f6f6f6;
-                border-bottom:1px solid #ddd;
-                text-align:left;
-                padding:8px;
-              "
-            >
-              {{ c }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(r, idx) in result.rows" :key="idx">
-            <td
-              v-for="(cell, j) in r"
-              :key="j"
-              style="
-                border-bottom:1px solid #eee;
-                padding:8px;
-                font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-              "
-            >
-              {{ cell }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div v-else style="padding:12px; color:#666;">
-        実行結果がここに表示されます
-      </div>
-    </div>
-  </main>
+  </div>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted } from "vue";
-import * as monaco from "monaco-editor";
-import { ExecuteSQL } from "./wailsjs/go/main/App";
-
-type QueryResult = {
-  columns: string[];
-  rows: string[][];
-};
-
-const editorEl = ref<HTMLDivElement | null>(null);
-let editor: monaco.editor.IStandaloneCodeEditor;
-
-const running = ref(false);
-const error = ref("");
-
-const result = ref<QueryResult>({
-  columns: [],
-  rows: [],
-});
-
-onMounted(() => {
-  if (!editorEl.value) return;
-
-  editor = monaco.editor.create(editorEl.value, {
-    value: "SELECT * FROM users;",
-    language: "sql",
-    theme: "vs-dark",
-    fontSize: 14,
-    minimap: { enabled: false },
-    automaticLayout: true,
-  });
-
-  // Wails + WebView2 対策（必須）
-  setTimeout(() => {
-    editor.layout();
-  }, 0);
-});
-
-async function run() {
-  error.value = "";
-  running.value = true;
-
-  try {
-    const sql = editor.getValue();
-    const res = await ExecuteSQL(sql);
-    result.value = res;
-  } catch (e: any) {
-    error.value = e?.message ?? String(e);
-  } finally {
-    running.value = false;
-  }
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
-</script>
+
+html, body, #app {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e1e1e;
+  color: #cccccc;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+}
+
+.header-bar {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #404040;
+  flex-shrink: 0;
+}
+
+.app-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #e0e0e0;
+}
+
+.main-area {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.sidebar {
+  width: 250px;
+  background: #252526;
+  border-right: 1px solid #404040;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.editor-area {
+  flex: 1;
+  min-height: 0;
+  border-bottom: 1px solid #404040;
+}
+
+.results-area {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.status-bar {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: #007acc;
+  color: #ffffff;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.placeholder {
+  padding: 20px;
+  color: #666666;
+  font-style: italic;
+}
+</style>
