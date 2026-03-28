@@ -5,7 +5,7 @@
 ## 技術スタック
 
 - Backend: Go 1.26.1, `net/http`, `modernc.org/sqlite` (CGO=0)
-- Frontend: Vue 3.5, TypeScript 6.0, Vite 8.0, Monaco Editor 0.55, pnpm
+- Frontend: Vue 3.5, TypeScript 6.0, Vite 8.0, CodeMirror 6, pnpm
 - API: REST (JSON), ポート 5522
 - テスト: `go test ./internal/...`（httptest + インメモリSQLite、モック不使用）
 
@@ -25,8 +25,7 @@
 - TypeScript: 最厳格設定（strict + noUncheckedIndexedAccess + exactOptionalPropertyTypes 等）
 - TypeScript: `any` 禁止、`as` キャスト禁止、`unknown` + 型ガードを使う
 - Vue SFC は composable を積極的に抽出
-- Monaco Editor は Vue ラッパー禁止、素で `monaco.editor.create()` を使う
-- CSS ルートに `text-align:center` を置かない（Monaco が崩れる）
+- CodeMirror 6 は Vue ラッパー禁止、素で `new EditorView()` を使う
 
 ## API エンドポイント
 
