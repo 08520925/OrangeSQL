@@ -67,11 +67,11 @@ claude
 ```bash
 cd OrangeSQL
 
-# サーバー起動（デフォルト: data.db）
-go run .
+# ビルド+起動（Windows では go run はファイアウォール警告が出るため使わない）
+go build -o orangesql.exe . && ./orangesql.exe
 
 # 別の DB ファイルを指定
-go run . -db /path/to/mydb.sqlite
+go build -o orangesql.exe . && ./orangesql.exe -db /path/to/mydb.sqlite
 
 # テスト実行
 go test ./internal/...
@@ -101,7 +101,7 @@ pnpm add <package>
 
 ```bash
 # ターミナル1: バックエンド
-cd OrangeSQL && go run .
+cd OrangeSQL && go build -o orangesql.exe . && ./orangesql.exe
 
 # ターミナル2: フロントエンド
 cd OrangeSQL/frontend && pnpm dev

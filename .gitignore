@@ -5,5 +5,9 @@ OrangeSQL/build/bin
 OrangeSQL/frontend/dist
 OrangeSQL/frontend/node_modules
 
+# Build output
+OrangeSQL/orangesql.exe
+
 # Local database
 OrangeSQL/test.db
+OrangeSQL/data.db

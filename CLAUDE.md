@@ -37,8 +37,8 @@
 ## コマンド
 
 ```bash
-# バックエンド開発
-cd OrangeSQL && go run .
+# バックエンド ビルド+起動（Windows では go run は使わない）
+cd OrangeSQL && go build -o orangesql.exe . && ./orangesql.exe
 
 # テスト
 cd OrangeSQL && go test ./internal/...
@@ -48,6 +48,9 @@ cd OrangeSQL/frontend && pnpm dev
 
 # フロントエンドビルド
 cd OrangeSQL/frontend && pnpm build
+
+# E2E テスト（バックエンド+フロントエンド起動中に実行）
+cd OrangeSQL/frontend && pnpm test:e2e
 
 # パッケージ追加
 cd OrangeSQL/frontend && pnpm add <package>
