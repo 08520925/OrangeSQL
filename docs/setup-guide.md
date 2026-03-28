@@ -4,44 +4,15 @@
 
 ---
 
-## 1. 初回セットアップ（未完了の作業）
+## 1. 初回セットアップ
 
-### 1.1 GitHub に ANTHROPIC_API_KEY を設定する
-
-Claude Code GitHub Action を動かすために必要。
-
-1. https://github.com/08520925/OrangeSQL/settings/secrets/actions にアクセス
-2. 「New repository secret」をクリック
-3. Name: `ANTHROPIC_API_KEY`
-4. Value: Anthropic の API キーを貼り付け
-5. 「Add secret」をクリック
-
-### 1.2 Claude GitHub App をインストールする
-
-Issue への `@claude` メンションで自動実装を有効にする。
-
-1. ターミナルで Claude Code を起動
-2. `/install-github-app` を実行
-3. 画面の指示に従ってリポジトリにアプリをインストール
-
-### 1.3 現在の変更をコミット・プッシュする
-
-仕様書・CLAUDE.md・GitHub Action ワークフローをリポジトリに反映する。
-
-```bash
-cd C:/work/OrangeSQL
-git add docs/ CLAUDE.md .github/
-git commit -m "Phase 1 仕様書・CLAUDE.md・GitHub Action 追加"
-git push origin develop
-```
-
-### 1.4 pnpm をインストールする（未インストールの場合）
+### 1.1 pnpm をインストールする（未インストールの場合）
 
 ```bash
 npm install -g pnpm
 ```
 
-### 1.5 Go 1.26.1 を確認する
+### 1.2 Go 1.26.1 を確認する
 
 ```bash
 go version
@@ -52,15 +23,19 @@ go version
 
 ## 2. 開発の進め方
 
-### 方法A: スマホから Issue 駆動（推奨）
+### ワークフロー
 
-1. GitHub の Issue 一覧を開く: https://github.com/08520925/OrangeSQL/issues
-2. 着手したい Issue を開く（依存関係に注意、#1 が最初）
-3. Issue にコメント: `@claude この Issue を実装して`
-4. Claude が自動でブランチ作成 → 実装 → PR 作成
-5. PR を確認してマージ
+```
+スマホ: GitHub Issue を作成 or 確認
+  ↓
+PC: Claude Code を起動して「Issue #N を実装して」
+  ↓
+Claude Code がコード作成（サブスク内、追加料金なし）
+  ↓
+確認 → コミット・プッシュ
+```
 
-### 方法B: ローカルで Claude Code を使う
+### 開始方法
 
 ```bash
 cd C:/work/OrangeSQL

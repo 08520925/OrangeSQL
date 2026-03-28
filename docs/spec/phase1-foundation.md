@@ -575,11 +575,10 @@ func NewTestDB(t *testing.T) database.Database {
 Phase 1 の全作業を GitHub Issue に分解し、1 Issue = 1 PR で進める。
 
 ```
-Issue作成（スマホ可）
-  → @claude にメンション or ローカルで claude -p
-    → Claude が CLAUDE.md + 仕様書を読んで実装
-      → PR 自動作成
-        → テスト通過確認 → マージ
+スマホ: Issue 作成 or 確認
+  → PC: Claude Code を起動して「Issue #N を実装して」
+    → Claude Code がコード作成
+      → 確認 → コミット・プッシュ
 ```
 
 ### Issue の書き方ルール
