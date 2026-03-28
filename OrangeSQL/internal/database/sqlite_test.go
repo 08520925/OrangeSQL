@@ -109,6 +109,40 @@ func TestSQLite_Tables(t *testing.T) {
 	}
 }
 
+func TestSQLite_Columns(t *testing.T) {
+	db := testutil.NewTestDB(t)
+
+	cols, err := db.Columns("users")
+	if err != nil {
+		t.Fatalf("columns failed: %v", err)
+	}
+	if len(cols) != 3 {
+		t.Fatalf("expected 3 columns, got %d", len(cols))
+	}
+
+	// id: INTEGER, PK, NOT NULL (autoincrement implies PK)
+	if cols[0].Name != "id" || cols[0].Type != "INTEGER" || !cols[0].PK {
+		t.Fatalf("unexpected id column: %+v", cols[0])
+	}
+	// name: TEXT, NOT NULL
+	if cols[1].Name != "name" || cols[1].Type != "TEXT" || !cols[1].NotNull {
+		t.Fatalf("unexpected name column: %+v", cols[1])
+	}
+	// email: TEXT, nullable
+	if cols[2].Name != "email" || cols[2].Type != "TEXT" || cols[2].NotNull {
+		t.Fatalf("unexpected email column: %+v", cols[2])
+	}
+}
+
+func TestSQLite_Columns_NotFound(t *testing.T) {
+	db := testutil.NewTestDB(t)
+
+	_, err := db.Columns("nonexistent")
+	if err == nil {
+		t.Fatal("expected error for nonexistent table")
+	}
+}
+
 func TestSQLite_Name(t *testing.T) {
 	db := testutil.NewTestDB(t)
 

@@ -39,6 +39,11 @@ export function fetchTables(): Promise<{ tables: { name: string; type: string }[
   return request("/schema/tables");
 }
 
+/** カラム情報を取得する */
+export function fetchColumns(table: string): Promise<{ columns: { name: string; type: string; pk: boolean; notNull: boolean }[] }> {
+  return request(`/schema/columns?table=${encodeURIComponent(table)}`);
+}
+
 /** ヘルスチェック */
 export function fetchHealth(): Promise<{ status: string; database: string }> {
   return request("/health");

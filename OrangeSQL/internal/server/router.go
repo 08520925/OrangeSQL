@@ -18,7 +18,8 @@ func NewRouter(db database.Database) http.Handler {
 
 	mux.HandleFunc("POST /api/query", query.Handler(db))
 	mux.HandleFunc("POST /api/exec", exec.Handler(db))
-	mux.HandleFunc("GET /api/schema/tables", schema.Handler(db))
+	mux.HandleFunc("GET /api/schema/tables", schema.TablesHandler(db))
+	mux.HandleFunc("GET /api/schema/columns", schema.ColumnsHandler(db))
 
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

@@ -118,3 +118,35 @@ func (s *SQLite) Tables() ([]TableInfo, error) {
 	}
 	return tables, rows.Err()
 }
+
+func (s *SQLite) Columns(tableName string) ([]ColumnInfo, error) {
+	rows, err := s.db.Query(fmt.Sprintf("PRAGMA table_info(%q)", tableName))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var columns []ColumnInfo
+	for rows.Next() {
+		var cid int
+		var name, colType string
+		var notNull, pk int
+		var dfltValue interface{}
+		if err := rows.Scan(&cid, &name, &colType, &notNull, &dfltValue, &pk); err != nil {
+			return nil, err
+		}
+		columns = append(columns, ColumnInfo{
+			Name:    name,
+			Type:    colType,
+			PK:      pk > 0,
+			NotNull: notNull > 0,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(columns) == 0 {
+		return nil, fmt.Errorf("table not found: %s", tableName)
+	}
+	return columns, nil
+}

@@ -7,8 +7,8 @@ import (
 	"OrangeSQL/internal/database"
 )
 
-// Handler は GET /api/schema/tables のHTTPハンドラを返す。
-func Handler(db database.Database) http.HandlerFunc {
+// TablesHandler は GET /api/schema/tables のHTTPハンドラを返す。
+func TablesHandler(db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
@@ -20,6 +20,30 @@ func Handler(db database.Database) http.HandlerFunc {
 		}
 
 		resp := BuildResponse(tables)
+		json.NewEncoder(w).Encode(resp)
+	}
+}
+
+// ColumnsHandler は GET /api/schema/columns のHTTPハンドラを返す。
+func ColumnsHandler(db database.Database) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		tableName := r.URL.Query().Get("table")
+		if tableName == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: "table parameter is required"})
+			return
+		}
+
+		cols, err := db.Columns(tableName)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
+			return
+		}
+
+		resp := BuildColumnsResponse(cols)
 		json.NewEncoder(w).Encode(resp)
 	}
 }

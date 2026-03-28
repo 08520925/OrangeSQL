@@ -9,6 +9,8 @@ type Database interface {
 	Exec(sql string) (ExecResult, error)
 	// Tables はテーブル・ビュー一覧を返す。
 	Tables() ([]TableInfo, error)
+	// Columns は指定テーブルのカラム情報を返す。
+	Columns(tableName string) ([]ColumnInfo, error)
 	// Name は接続中のDB名（ファイルパス等）を返す。
 	Name() string
 	// Close は接続を閉じる。
@@ -30,4 +32,12 @@ type ExecResult struct {
 type TableInfo struct {
 	Name string // テーブル名
 	Type string // "table" or "view"
+}
+
+// ColumnInfo はテーブルのカラム情報。
+type ColumnInfo struct {
+	Name    string
+	Type    string
+	PK      bool
+	NotNull bool
 }

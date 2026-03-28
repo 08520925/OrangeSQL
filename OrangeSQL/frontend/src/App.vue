@@ -1,40 +1,71 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, nextTick } from "vue";
+import TabBar from "./features/tab-bar/TabBar.vue";
 import SqlEditor from "./features/sql-editor/SqlEditor.vue";
 import ResultsPanel from "./features/results-panel/ResultsPanel.vue";
 import SchemaSidebar from "./features/schema-sidebar/SchemaSidebar.vue";
+import ResizeHandle from "./features/resize-handle/ResizeHandle.vue";
 import { useResults } from "./features/results-panel/use-results";
 import { useSchema } from "./features/schema-sidebar/use-schema";
+import { useTabs } from "./features/tab-bar/use-tabs";
+import { useResize } from "./features/resize-handle/use-resize";
 import { fetchHealth } from "./shared/api";
 
 const editorRef = ref<InstanceType<typeof SqlEditor> | null>(null);
 const { state, execute } = useResults();
-const { tables, loading: schemaLoading, refresh: refreshSchema } = useSchema();
+const { tables, loading: schemaLoading, refresh: refreshSchema, toggleExpand, isExpanded, getColumns } = useSchema();
+const { tabs, activeTabId, activeTab, addTab, closeTab, switchTab, updateSql, updateResult } = useTabs();
+const { editorRatio, onMouseDown } = useResize(".content-area");
 
 const dbName = ref<string>("");
 
-// ヘルスチェックで DB 名を取得
 fetchHealth()
   .then((h) => { dbName.value = h.database; })
   .catch(() => { dbName.value = "未接続"; });
 
-async function handleExecute(): Promise<void> {
-  const sql = editorRef.value?.getValue() ?? "";
-  await execute(sql);
-}
+// タブ切り替え時にエディタの内容を復元
+watch(activeTabId, () => {
+  void nextTick(() => {
+    const tab = activeTab.value;
+    if (tab != null && editorRef.value != null) {
+      editorRef.value.setValue(tab.sql);
+      state.value = tab.result;
+    }
+  });
+});
 
-function handleSelectTable(tableName: string): void {
-  editorRef.value?.setValue(`SELECT * FROM ${tableName} LIMIT 100`);
-}
-
-// exec 成功後にサイドバーを自動更新
+// 結果の状態をアクティブタブに同期
 watch(state, (s) => {
+  updateResult(s);
   if (s.kind === "exec") {
     void refreshSchema();
   }
-});
+}, { deep: true });
 
-// ステータスバーのテキスト
+async function handleExecute(): Promise<void> {
+  const sql = editorRef.value?.getValue() ?? "";
+  updateSql(sql);
+  await execute(sql);
+}
+
+function handleSqlChange(): void {
+  const sql = editorRef.value?.getValue() ?? "";
+  updateSql(sql);
+}
+
+function handleSelectTable(tableName: string): void {
+  const sql = `SELECT * FROM ${tableName} LIMIT 100`;
+  editorRef.value?.setValue(sql);
+  updateSql(sql);
+}
+
+function handleSwitchTab(id: string): void {
+  // 現在のタブのSQLを保存
+  const currentSql = editorRef.value?.getValue() ?? "";
+  updateSql(currentSql);
+  switchTab(id);
+}
+
 function statusText(): string {
   switch (state.value.kind) {
     case "idle": return "Ready";
@@ -59,19 +90,30 @@ function statusText(): string {
         ▶ 実行
       </button>
     </header>
+    <TabBar
+      :tabs="tabs"
+      :active-tab-id="activeTabId"
+      @switch-tab="handleSwitchTab"
+      @add-tab="addTab"
+      @close-tab="closeTab"
+    />
     <div class="main-area">
       <aside class="sidebar">
         <SchemaSidebar
           :tables="tables"
           :loading="schemaLoading"
+          :is-expanded="isExpanded"
+          :get-columns="getColumns"
           @select-table="handleSelectTable"
+          @toggle-expand="toggleExpand"
           @refresh="refreshSchema"
         />
       </aside>
       <div class="content-area">
-        <div class="editor-area">
-          <SqlEditor ref="editorRef" @execute="handleExecute" />
+        <div class="editor-area" :style="{ flex: `0 0 ${editorRatio * 100}%` }">
+          <SqlEditor ref="editorRef" @execute="handleExecute" @change="handleSqlChange" />
         </div>
+        <ResizeHandle @mousedown="onMouseDown" />
         <div class="results-area">
           <ResultsPanel :state="state" />
         </div>
@@ -117,16 +159,8 @@ html, body, #app {
   flex-shrink: 0;
 }
 
-.app-name {
-  font-weight: 600;
-  font-size: 14px;
-  color: #e0e0e0;
-}
-
-.db-info {
-  color: #888888;
-  font-size: 12px;
-}
+.app-name { font-weight: 600; font-size: 14px; color: #e0e0e0; }
+.db-info { color: #888888; font-size: 12px; }
 
 .execute-btn {
   margin-left: auto;
@@ -138,21 +172,10 @@ html, body, #app {
   cursor: pointer;
   font-size: 12px;
 }
+.execute-btn:hover { background: #1a8ad4; }
+.execute-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.execute-btn:hover {
-  background: #1a8ad4;
-}
-
-.execute-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.main-area {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
+.main-area { display: flex; flex: 1; min-height: 0; }
 
 .sidebar {
   width: 250px;
@@ -169,17 +192,9 @@ html, body, #app {
   min-width: 0;
 }
 
-.editor-area {
-  flex: 1;
-  min-height: 0;
-  border-bottom: 1px solid #404040;
-}
+.editor-area { min-height: 100px; overflow: hidden; }
 
-.results-area {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-}
+.results-area { flex: 1; min-height: 100px; overflow: auto; }
 
 .status-bar {
   height: 28px;
@@ -191,8 +206,5 @@ html, body, #app {
   font-size: 12px;
   flex-shrink: 0;
 }
-
-.status-bar.status-error {
-  background: #c72e2e;
-}
+.status-bar.status-error { background: #c72e2e; }
 </style>
