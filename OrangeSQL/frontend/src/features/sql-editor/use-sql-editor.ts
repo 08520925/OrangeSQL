@@ -74,5 +74,38 @@ export function useSqlEditor(
     });
   }
 
-  return { getValue, setValue };
+  /**
+   * カーソル位置にある SQL 文を返す。
+   * セミコロンで区切られた複数文がある場合、カーソルが置かれている文だけを返す。
+   */
+  function getStatementAtCursor(): string {
+    if (view == null) return "";
+    const doc = view.state.doc.toString();
+    const cursorPos = view.state.selection.main.head;
+
+    // セミコロンで分割し、各文の開始・終了位置を記録
+    let pos = 0;
+    const statements: { start: number; end: number; text: string }[] = [];
+    for (const part of doc.split(";")) {
+      const end = pos + part.length;
+      const trimmed = part.trim();
+      if (trimmed.length > 0) {
+        statements.push({ start: pos, end, text: trimmed });
+      }
+      pos = end + 1; // +1 for semicolon
+    }
+
+    // カーソル位置を含む文を探す
+    for (const stmt of statements) {
+      if (cursorPos >= stmt.start && cursorPos <= stmt.end + 1) {
+        return stmt.text;
+      }
+    }
+
+    // 見つからなければ最後の文、それもなければ全文
+    const last = statements[statements.length - 1];
+    return last?.text ?? doc.trim();
+  }
+
+  return { getValue, setValue, getStatementAtCursor };
 }

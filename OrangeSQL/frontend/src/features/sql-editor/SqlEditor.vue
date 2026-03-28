@@ -16,6 +16,7 @@ const editorApi: SqlEditorApi = useSqlEditor(containerRef, () => {
 defineExpose({
   getValue: editorApi.getValue,
   setValue: editorApi.setValue,
+  getStatementAtCursor: editorApi.getStatementAtCursor,
 });
 </script>
 

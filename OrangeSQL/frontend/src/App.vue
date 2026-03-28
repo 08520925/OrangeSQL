@@ -43,8 +43,9 @@ watch(state, (s) => {
 }, { deep: true });
 
 async function handleExecute(): Promise<void> {
-  const sql = editorRef.value?.getValue() ?? "";
-  updateSql(sql);
+  const fullSql = editorRef.value?.getValue() ?? "";
+  updateSql(fullSql);
+  const sql = editorRef.value?.getStatementAtCursor() ?? "";
   await execute(sql);
 }
 
