@@ -1,36 +1,32 @@
 package main
 
 import (
-	"embed"
+	"flag"
+	"fmt"
+	"log"
+	"net/http"
 
-	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"OrangeSQL/internal/database"
+	"OrangeSQL/internal/server"
 )
 
-//go:embed all:frontend/dist
-var assets embed.FS
-
 func main() {
-	// Create an instance of the app structure
-	app := NewApp()
+	dbPath := flag.String("db", "./data.db", "SQLite database file path")
+	flag.Parse()
 
-	// Create application with options
-	err := wails.Run(&options.App{
-		Title:  "OrangeSQL",
-		Width:  1024,
-		Height: 768,
-		AssetServer: &assetserver.Options{
-			Assets: assets,
-		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
-		OnStartup:        app.startup,
-		Bind: []interface{}{
-			app,
-		},
-	})
-
+	db, err := database.NewSQLite(*dbPath)
 	if err != nil {
-		println("Error:", err.Error())
+		log.Fatalf("failed to open database: %v", err)
+	}
+	defer db.Close()
+
+	router := server.NewRouter(db)
+
+	addr := ":5522"
+	fmt.Printf("OrangeSQL server starting on http://localhost%s\n", addr)
+	fmt.Printf("Database: %s\n", db.Name())
+
+	if err := http.ListenAndServe(addr, router); err != nil {
+		log.Fatalf("server error: %v", err)
 	}
 }
