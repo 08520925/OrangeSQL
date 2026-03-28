@@ -1,0 +1,114 @@
+<script setup lang="ts">
+import type { TableEntry } from "./types";
+
+defineProps<{
+  tables: TableEntry[];
+  loading: boolean;
+}>();
+
+const emit = defineEmits<{
+  selectTable: [tableName: string];
+  refresh: [];
+}>();
+</script>
+
+<template>
+  <div class="schema-sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">テーブル</span>
+      <button class="refresh-btn" :disabled="loading" @click="emit('refresh')">↻</button>
+    </div>
+    <div v-if="loading" class="loading">読み込み中...</div>
+    <ul v-else class="table-list">
+      <li
+        v-for="table in tables"
+        :key="table.name"
+        class="table-item"
+        @click="emit('selectTable', table.name)"
+      >
+        <span class="table-icon">{{ table.type === 'view' ? '👁' : '▦' }}</span>
+        <span class="table-name">{{ table.name }}</span>
+      </li>
+    </ul>
+    <div v-if="!loading && tables.length === 0" class="empty">テーブルなし</div>
+  </div>
+</template>
+
+<style scoped>
+.schema-sidebar {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #404040;
+}
+
+.sidebar-title {
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #888888;
+}
+
+.refresh-btn {
+  background: none;
+  border: none;
+  color: #cccccc;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.refresh-btn:hover {
+  background: #3a3a3a;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.loading, .empty {
+  padding: 12px;
+  color: #666666;
+  font-size: 12px;
+}
+
+.table-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.table-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.table-item:hover {
+  background: #2a2d2e;
+}
+
+.table-icon {
+  font-size: 12px;
+  width: 16px;
+  text-align: center;
+}
+
+.table-name {
+  color: #cccccc;
+}
+</style>

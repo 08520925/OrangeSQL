@@ -1,25 +1,82 @@
 <script setup lang="ts">
-// レイアウト骨格のみ。各機能コンポーネントは Issue #7〜#10 で実装する。
+import { ref, watch } from "vue";
+import SqlEditor from "./features/sql-editor/SqlEditor.vue";
+import ResultsPanel from "./features/results-panel/ResultsPanel.vue";
+import SchemaSidebar from "./features/schema-sidebar/SchemaSidebar.vue";
+import { useResults } from "./features/results-panel/use-results";
+import { useSchema } from "./features/schema-sidebar/use-schema";
+import { fetchHealth } from "./shared/api";
+
+const editorRef = ref<InstanceType<typeof SqlEditor> | null>(null);
+const { state, execute } = useResults();
+const { tables, loading: schemaLoading, refresh: refreshSchema } = useSchema();
+
+const dbName = ref<string>("");
+
+// ヘルスチェックで DB 名を取得
+fetchHealth()
+  .then((h) => { dbName.value = h.database; })
+  .catch(() => { dbName.value = "未接続"; });
+
+async function handleExecute(): Promise<void> {
+  const sql = editorRef.value?.getValue() ?? "";
+  await execute(sql);
+}
+
+function handleSelectTable(tableName: string): void {
+  editorRef.value?.setValue(`SELECT * FROM ${tableName} LIMIT 100`);
+}
+
+// exec 成功後にサイドバーを自動更新
+watch(state, (s) => {
+  if (s.kind === "exec") {
+    void refreshSchema();
+  }
+});
+
+// ステータスバーのテキスト
+function statusText(): string {
+  switch (state.value.kind) {
+    case "idle": return "Ready";
+    case "loading": return "実行中...";
+    case "error": return `エラー: ${state.value.message}`;
+    case "exec": return `${String(state.value.data.affectedRows)} 行に影響 (${String(state.value.data.executionTimeMs)}ms)`;
+    case "query": {
+      const q = state.value.data;
+      const trunc = q.truncated === true ? " [切り詰め]" : "";
+      return `${String(q.rowCount)} 行取得 (${String(q.executionTimeMs)}ms)${trunc}`;
+    }
+  }
+}
 </script>
 
 <template>
   <div class="app-layout">
     <header class="header-bar">
       <span class="app-name">OrangeSQL</span>
+      <span class="db-info">{{ dbName }}</span>
+      <button class="execute-btn" :disabled="state.kind === 'loading'" @click="handleExecute">
+        ▶ 実行
+      </button>
     </header>
     <div class="main-area">
       <aside class="sidebar">
-        <p class="placeholder">サイドバー（#9 で実装）</p>
+        <SchemaSidebar
+          :tables="tables"
+          :loading="schemaLoading"
+          @select-table="handleSelectTable"
+          @refresh="refreshSchema"
+        />
       </aside>
       <div class="content-area">
         <div class="editor-area">
-          <p class="placeholder">SQLエディタ（#7 で実装）</p>
+          <SqlEditor ref="editorRef" @execute="handleExecute" />
         </div>
         <div class="results-area">
-          <p class="placeholder">結果パネル（#8 で実装）</p>
+          <ResultsPanel :state="state" />
         </div>
-        <div class="status-bar">
-          <span>Ready</span>
+        <div class="status-bar" :class="{ 'status-error': state.kind === 'error' }">
+          <span>{{ statusText() }}</span>
         </div>
       </div>
     </div>
@@ -54,6 +111,7 @@ html, body, #app {
   display: flex;
   align-items: center;
   padding: 0 16px;
+  gap: 16px;
   background: #2d2d2d;
   border-bottom: 1px solid #404040;
   flex-shrink: 0;
@@ -63,6 +121,31 @@ html, body, #app {
   font-weight: 600;
   font-size: 14px;
   color: #e0e0e0;
+}
+
+.db-info {
+  color: #888888;
+  font-size: 12px;
+}
+
+.execute-btn {
+  margin-left: auto;
+  background: #007acc;
+  color: #ffffff;
+  border: none;
+  padding: 4px 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.execute-btn:hover {
+  background: #1a8ad4;
+}
+
+.execute-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .main-area {
@@ -109,9 +192,7 @@ html, body, #app {
   flex-shrink: 0;
 }
 
-.placeholder {
-  padding: 20px;
-  color: #666666;
-  font-style: italic;
+.status-bar.status-error {
+  background: #c72e2e;
 }
 </style>
