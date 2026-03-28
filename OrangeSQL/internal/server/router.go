@@ -7,19 +7,27 @@ import (
 	"time"
 
 	"OrangeSQL/internal/database"
+	"OrangeSQL/internal/exec"
+	"OrangeSQL/internal/query"
+	"OrangeSQL/internal/schema"
 )
 
 // NewRouter は API ルーティングを設定した http.Handler を返す。
 func NewRouter(db database.Database) http.Handler {
 	mux := http.NewServeMux()
 
-	// エンドポイントは Issue #2〜#5 で実装する。
-	// ここではルーティングの骨格のみ定義。
+	mux.HandleFunc("POST /api/query", query.Handler(db))
+	mux.HandleFunc("POST /api/exec", exec.Handler(db))
+	mux.HandleFunc("GET /api/schema/tables", schema.Handler(db))
 
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		status := "ok"
+		if _, err := db.Query("SELECT 1"); err != nil {
+			status = "error"
+		}
 		json.NewEncoder(w).Encode(map[string]string{
-			"status":   "ok",
+			"status":   status,
 			"database": db.Name(),
 		})
 	})
