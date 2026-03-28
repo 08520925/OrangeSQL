@@ -1,15 +1,14 @@
-import { ref, reactive, onMounted } from "vue";
-import { fetchTables, fetchColumns } from "../../shared/api";
-import type { TableEntry, ColumnEntry } from "./types";
+import { ref, onMounted } from "vue";
+import { fetchTables } from "../../shared/api";
+import type { TableEntry } from "./types";
 
 /**
- * テーブル一覧・カラム情報の取得と管理を担う composable。
+ * テーブル一覧の取得と更新を管理する composable。
+ * カラム展開は SchemaSidebar.vue 内で直接管理する。
  */
 export function useSchema() {
   const tables = ref<TableEntry[]>([]);
   const loading = ref<boolean>(false);
-  const expandedColumns = reactive<Record<string, ColumnEntry[]>>({});
-  const expandedTables = reactive<Set<string>>(new Set());
 
   async function refresh(): Promise<void> {
     loading.value = true;
@@ -23,32 +22,9 @@ export function useSchema() {
     }
   }
 
-  async function toggleExpand(tableName: string): Promise<void> {
-    if (expandedTables.has(tableName)) {
-      expandedTables.delete(tableName);
-      return;
-    }
-
-    try {
-      const res = await fetchColumns(tableName);
-      expandedColumns[tableName] = res.columns;
-      expandedTables.add(tableName);
-    } catch {
-      // エラー時は展開しない
-    }
-  }
-
-  function isExpanded(tableName: string): boolean {
-    return expandedTables.has(tableName);
-  }
-
-  function getColumns(tableName: string): ColumnEntry[] {
-    return expandedColumns[tableName] ?? [];
-  }
-
   onMounted(() => {
     void refresh();
   });
 
-  return { tables, loading, refresh, toggleExpand, isExpanded, getColumns };
+  return { tables, loading, refresh };
 }

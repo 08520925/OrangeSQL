@@ -1,18 +1,33 @@
 <script setup lang="ts">
+import { ref } from "vue";
+import { fetchColumns } from "../../shared/api";
 import type { TableEntry, ColumnEntry } from "./types";
 
 defineProps<{
   tables: TableEntry[];
   loading: boolean;
-  isExpanded: (name: string) => boolean;
-  getColumns: (name: string) => ColumnEntry[];
 }>();
 
 const emit = defineEmits<{
   selectTable: [tableName: string];
-  toggleExpand: [tableName: string];
   refresh: [];
 }>();
+
+const expanded = ref<Record<string, ColumnEntry[]>>({});
+
+async function toggleExpand(tableName: string): Promise<void> {
+  if (tableName in expanded.value) {
+    const { [tableName]: _, ...rest } = expanded.value;
+    expanded.value = rest;
+    return;
+  }
+  try {
+    const res = await fetchColumns(tableName);
+    expanded.value = { ...expanded.value, [tableName]: res.columns };
+  } catch {
+    // エラー時は展開しない
+  }
+}
 </script>
 
 <template>
@@ -25,8 +40,8 @@ const emit = defineEmits<{
     <ul v-else class="table-list">
       <li v-for="table in tables" :key="table.name" class="table-group">
         <div class="table-item">
-          <button class="expand-btn" @click="emit('toggleExpand', table.name)">
-            {{ isExpanded(table.name) ? '▼' : '▶' }}
+          <button class="expand-btn" @click="toggleExpand(table.name)">
+            {{ table.name in expanded ? '▼' : '▶' }}
           </button>
           <span
             class="table-label"
@@ -36,8 +51,8 @@ const emit = defineEmits<{
             <span class="table-name">{{ table.name }}</span>
           </span>
         </div>
-        <ul v-if="isExpanded(table.name)" class="column-list">
-          <li v-for="col in getColumns(table.name)" :key="col.name" class="column-item">
+        <ul v-if="table.name in expanded" class="column-list">
+          <li v-for="col in expanded[table.name]" :key="col.name" class="column-item">
             <span class="col-pk">{{ col.pk ? '🔑' : '  ' }}</span>
             <span class="col-name">{{ col.name }}</span>
             <span class="col-type">{{ col.type }}</span>
@@ -51,106 +66,24 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
-.schema-sidebar {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-bottom: 1px solid #404040;
-}
-
-.sidebar-title {
-  font-weight: 600;
-  font-size: 12px;
-  text-transform: uppercase;
-  color: #888888;
-}
-
-.refresh-btn {
-  background: none;
-  border: none;
-  color: #cccccc;
-  cursor: pointer;
-  font-size: 16px;
-  padding: 2px 6px;
-  border-radius: 3px;
-}
-
+.schema-sidebar { height: 100%; display: flex; flex-direction: column; }
+.sidebar-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #404040; }
+.sidebar-title { font-weight: 600; font-size: 12px; text-transform: uppercase; color: #888888; }
+.refresh-btn { background: none; border: none; color: #cccccc; cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 3px; }
 .refresh-btn:hover { background: #3a3a3a; }
 .refresh-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.loading, .empty {
-  padding: 12px;
-  color: #666666;
-  font-size: 12px;
-}
-
-.table-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.table-group {
-  border-bottom: 1px solid #2a2a2a;
-}
-
-.table-item {
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-}
-
-.expand-btn {
-  background: none;
-  border: none;
-  color: #888888;
-  cursor: pointer;
-  font-size: 10px;
-  padding: 6px 4px 6px 8px;
-  width: 24px;
-  text-align: center;
-}
-
+.loading, .empty { padding: 12px; color: #666666; font-size: 12px; }
+.table-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
+.table-group { border-bottom: 1px solid #2a2a2a; }
+.table-item { display: flex; align-items: center; font-size: 13px; }
+.expand-btn { background: none; border: none; color: #888888; cursor: pointer; font-size: 10px; padding: 6px 4px 6px 8px; width: 24px; text-align: center; }
 .expand-btn:hover { color: #cccccc; }
-
-.table-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-  padding: 6px 8px 6px 0;
-  cursor: pointer;
-}
-
+.table-label { display: flex; align-items: center; gap: 6px; flex: 1; padding: 6px 8px 6px 0; cursor: pointer; }
 .table-label:hover { background: #2a2d2e; }
-
 .table-icon { font-size: 12px; width: 16px; text-align: center; }
 .table-name { color: #cccccc; }
-
-.column-list {
-  list-style: none;
-  margin: 0;
-  padding: 0 0 4px 0;
-}
-
-.column-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 8px 2px 32px;
-  font-size: 12px;
-  color: #999999;
-}
-
+.column-list { list-style: none; margin: 0; padding: 0 0 4px 0; }
+.column-item { display: flex; align-items: center; gap: 6px; padding: 2px 8px 2px 32px; font-size: 12px; color: #999999; }
 .col-pk { width: 16px; font-size: 10px; }
 .col-name { color: #bbbbbb; min-width: 60px; }
 .col-type { color: #6a9955; font-size: 11px; }

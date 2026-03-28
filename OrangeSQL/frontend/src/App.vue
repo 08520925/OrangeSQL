@@ -13,7 +13,7 @@ import { fetchHealth } from "./shared/api";
 
 const editorRef = ref<InstanceType<typeof SqlEditor> | null>(null);
 const { state, execute } = useResults();
-const { tables, loading: schemaLoading, refresh: refreshSchema, toggleExpand, isExpanded, getColumns } = useSchema();
+const { tables, loading: schemaLoading, refresh: refreshSchema } = useSchema();
 const { tabs, activeTabId, activeTab, addTab, closeTab, switchTab, updateSql, updateResult } = useTabs();
 const { editorRatio, onMouseDown } = useResize(".content-area");
 
@@ -102,10 +102,7 @@ function statusText(): string {
         <SchemaSidebar
           :tables="tables"
           :loading="schemaLoading"
-          :is-expanded="isExpanded"
-          :get-columns="getColumns"
           @select-table="handleSelectTable"
-          @toggle-expand="toggleExpand"
           @refresh="refreshSchema"
         />
       </aside>
