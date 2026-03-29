@@ -3,6 +3,7 @@ import { ref } from "vue";
 import type { QueryResult } from "../../shared/types";
 import { execBatch, querySQL } from "../../shared/api";
 import EditableCell from "./EditableCell.vue";
+import ExportToolbar from "./ExportToolbar.vue";
 import { useTableEdit } from "./use-table-edit";
 
 const props = defineProps<{
@@ -88,6 +89,7 @@ async function handleSave(): Promise<void> {
   <div class="editable-table-wrapper">
     <div class="toolbar">
       <span class="edit-badge">編集モード: {{ tableName }}</span>
+      <ExportToolbar :columns="columns" :rows="data.rows" />
       <button class="btn-add" @click="addNewRow">+ 行を追加</button>
       <template v-if="hasChanges">
         <button class="btn-save" :disabled="saving" @click="showConfirm = true">

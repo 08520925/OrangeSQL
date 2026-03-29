@@ -33,6 +33,9 @@ func NewRouter(cm *profile.ConnectionManager) http.Handler {
 	mux.HandleFunc("GET /api/schema/columns", func(w http.ResponseWriter, r *http.Request) {
 		schema.ColumnsHandler(cm.DB())(w, r)
 	})
+	mux.HandleFunc("GET /api/schema/completions", func(w http.ResponseWriter, r *http.Request) {
+		schema.CompletionsHandler(cm.DB())(w, r)
+	})
 
 	// プロファイル管理 API
 	mux.HandleFunc("GET /api/profiles", profile.ListHandler(cm))

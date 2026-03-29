@@ -24,6 +24,18 @@ type ColumnEntry struct {
 	NotNull bool   `json:"notNull"`
 }
 
+// CompletionsResponse は GET /api/schema/completions の JSON レスポンス。
+type CompletionsResponse struct {
+	Tables []CompletionTable `json:"tables"`
+}
+
+// CompletionTable はテーブル名 + カラム一覧。
+type CompletionTable struct {
+	Name    string        `json:"name"`
+	Type    string        `json:"type"`
+	Columns []ColumnEntry `json:"columns"`
+}
+
 // ErrorResponse はエラー時の JSON レスポンス。
 type ErrorResponse struct {
 	Error string `json:"error"`

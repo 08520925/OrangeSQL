@@ -52,6 +52,11 @@ export function execBatch(statements: string[]): Promise<BatchExecResult> {
   });
 }
 
+/** 補完用: 全テーブル + カラムを一括取得 */
+export function fetchCompletions(): Promise<{ tables: { name: string; type: string; columns: { name: string; type: string }[] }[] }> {
+  return request("/schema/completions");
+}
+
 /** ヘルスチェック */
 export function fetchHealth(): Promise<{ status: string; database: string }> {
   return request("/health");

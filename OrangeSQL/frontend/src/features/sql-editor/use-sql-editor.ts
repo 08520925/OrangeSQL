@@ -5,6 +5,8 @@ import { sql } from "@codemirror/lang-sql";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { syntaxHighlighting, defaultHighlightStyle } from "@codemirror/language";
+import { autocompletion } from "@codemirror/autocomplete";
+import { sqlCompletionSource, refreshCompletionData } from "./sql-completions";
 import type { SqlEditorApi } from "./types";
 
 /**
@@ -37,6 +39,9 @@ export function useSqlEditor(
       },
     ]);
 
+    // 補完データを初期取得
+    void refreshCompletionData();
+
     const state = EditorState.create({
       doc: "",
       extensions: [
@@ -44,6 +49,7 @@ export function useSqlEditor(
         keymap.of([...defaultKeymap, ...historyKeymap]),
         history(),
         sql(),
+        autocompletion({ override: [sqlCompletionSource] }),
         oneDark,
         syntaxHighlighting(defaultHighlightStyle),
         EditorView.lineWrapping,
@@ -107,5 +113,5 @@ export function useSqlEditor(
     return last?.text ?? doc.trim();
   }
 
-  return { getValue, setValue, getStatementAtCursor };
+  return { getValue, setValue, getStatementAtCursor, refreshCompletions: refreshCompletionData };
 }

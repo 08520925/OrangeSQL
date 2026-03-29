@@ -2,6 +2,7 @@
 import type { ResultState } from "./types";
 import type { QueryResult } from "../../shared/types";
 import EditableTable from "./EditableTable.vue";
+import ExportToolbar from "./ExportToolbar.vue";
 
 const props = defineProps<{
   state: ResultState;
@@ -53,6 +54,9 @@ function isEditable(state: ResultState): boolean {
       />
       <!-- 読み取り専用テーブル -->
       <div v-else class="table-wrapper">
+        <div class="readonly-toolbar">
+          <ExportToolbar :columns="state.data.columns" :rows="state.data.rows" />
+        </div>
         <div v-if="state.data.truncated" class="truncated-notice">
           結果が 10,000 行で切り詰められました
         </div>
@@ -114,9 +118,23 @@ function isEditable(state: ResultState): boolean {
   font-size: 12px;
 }
 
+.readonly-toolbar {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #404040;
+}
+
 .table-wrapper {
   overflow: auto;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-wrapper table {
+  flex: 1;
 }
 
 table {

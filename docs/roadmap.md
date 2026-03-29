@@ -43,6 +43,15 @@
 - 変更確認ダイアログ + 変更破棄機能
 - 仕様書: `docs/spec/phase5-table-edit.md`
 
+### Phase 6: オートコンプリート + エクスポート
+- SQL オートコンプリート（テーブル名・カラム名・SQL キーワード）
+- `GET /api/schema/completions` で全テーブル+カラムを一括取得
+- CodeMirror 6 `autocompletion` 拡張で補完ポップアップ
+- `table.` でカラム名補完、Ctrl+Space で手動トリガー
+- 結果エクスポート: CSV / JSON ダウンロード
+- クリップボードコピー: CSV / Markdown テーブル形式
+- 仕様書: `docs/spec/phase6-autocomplete-export.md`
+
 ---
 
 ## 検討中（Phase 未定）
@@ -53,5 +62,3 @@
 - サイドバー幅リサイズ
 - タブタイトルの編集
 - Go embed によるシングルバイナリ配布
-- クエリ結果の CSV / JSON エクスポート
-- SQL オートコンプリート（テーブル名・カラム名の補完）

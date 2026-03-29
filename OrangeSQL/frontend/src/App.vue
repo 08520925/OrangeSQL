@@ -47,6 +47,7 @@ watch(state, (s) => {
   updateResult(s);
   if (s.kind === "exec") {
     void refreshSchema();
+    editorRef.value?.refreshCompletions();
   }
 }, { deep: true });
 
@@ -81,6 +82,7 @@ function handleSwitchTab(id: string): void {
 async function handleConnect(id: string): Promise<void> {
   await connect(id);
   void refreshSchema();
+  editorRef.value?.refreshCompletions();
   // 全タブの結果をリセット
   for (const tab of tabs.value) {
     tab.result = { kind: "idle" };
