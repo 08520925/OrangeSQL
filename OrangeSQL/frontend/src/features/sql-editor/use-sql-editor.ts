@@ -5,7 +5,7 @@ import { sql } from "@codemirror/lang-sql";
 import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { syntaxHighlighting, defaultHighlightStyle } from "@codemirror/language";
-import { autocompletion } from "@codemirror/autocomplete";
+import { autocompletion, acceptCompletion } from "@codemirror/autocomplete";
 import { sqlCompletionSource, refreshCompletionData } from "./sql-completions";
 import type { SqlEditorApi } from "./types";
 
@@ -36,6 +36,10 @@ export function useSqlEditor(
           onExecute();
           return true;
         },
+      },
+      {
+        key: "Tab",
+        run: acceptCompletion,
       },
     ]);
 
