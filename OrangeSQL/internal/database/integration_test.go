@@ -138,6 +138,51 @@ func runDriverTest(t *testing.T, db database.Database) {
 	if err == nil {
 		t.Fatal("expected error for nonexistent table columns")
 	}
+
+	// 10. ExecBatch: 正常系（トランザクション成功）
+	db.Exec("DELETE FROM integration_test")
+	total, err := db.ExecBatch([]string{
+		"INSERT INTO integration_test (id, name, email) VALUES (10, 'Batch1', 'b1@test.com')",
+		"INSERT INTO integration_test (id, name, email) VALUES (11, 'Batch2', 'b2@test.com')",
+		"UPDATE integration_test SET name = 'Batch1Updated' WHERE id = 10",
+	})
+	if err != nil {
+		t.Fatalf("ExecBatch success case failed: %v", err)
+	}
+	if total != 3 {
+		t.Fatalf("expected 3 total affected rows, got %d", total)
+	}
+
+	// 確認: 2行存在し、Batch1 が更新されている
+	qr, err = db.Query("SELECT name FROM integration_test WHERE id = 10")
+	if err != nil {
+		t.Fatalf("verify query failed: %v", err)
+	}
+	if len(qr.Rows) != 1 || qr.Rows[0][0] == nil || *qr.Rows[0][0] != "Batch1Updated" {
+		t.Fatalf("expected 'Batch1Updated', got %v", qr.Rows)
+	}
+
+	// 11. ExecBatch: エラー時のロールバック
+	db.Exec("DELETE FROM integration_test")
+	db.Exec("INSERT INTO integration_test (id, name) VALUES (20, 'Original')")
+
+	_, err = db.ExecBatch([]string{
+		"UPDATE integration_test SET name = 'ShouldRollback' WHERE id = 20",
+		"INSERT INTO nonexistent_table_xyz VALUES (1)", // これが失敗
+	})
+	if err == nil {
+		t.Fatal("expected error for ExecBatch with bad SQL")
+	}
+
+	// ロールバック確認: name が 'Original' のまま
+	qr, err = db.Query("SELECT name FROM integration_test WHERE id = 20")
+	if err != nil {
+		t.Fatalf("rollback verify query failed: %v", err)
+	}
+	if len(qr.Rows) != 1 || qr.Rows[0][0] == nil || *qr.Rows[0][0] != "Original" {
+		t.Fatalf("expected 'Original' after rollback, got %v", qr.Rows)
+	}
+	t.Log("ExecBatch rollback verified")
 }
 
 func TestPostgres_Integration(t *testing.T) {
