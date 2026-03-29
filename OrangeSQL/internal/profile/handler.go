@@ -37,14 +37,16 @@ func CreateHandler(cm *ConnectionManager) http.HandlerFunc {
 			return
 		}
 
-		if strings.TrimSpace(req.Name) == "" || strings.TrimSpace(req.Path) == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(ErrorResponse{Error: "name and path are required"})
-			return
-		}
-
 		if req.Driver == "" {
 			req.Driver = "sqlite"
+		}
+
+		// バリデーション用に仮 Profile を構築して検証
+		tmp := Profile{Name: strings.TrimSpace(req.Name), Driver: req.Driver, Path: strings.TrimSpace(req.Path), Host: strings.TrimSpace(req.Host), DBName: strings.TrimSpace(req.DBName)}
+		if err := tmp.Validate(); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
+			return
 		}
 
 		store, err := cm.Store().Load()
@@ -54,7 +56,7 @@ func CreateHandler(cm *ConnectionManager) http.HandlerFunc {
 			return
 		}
 
-		p := NewProfile(NextID(store), req.Name, req.Driver, req.Path)
+		p := NewProfile(NextID(store), req)
 		store.Profiles = append(store.Profiles, p)
 
 		if err := cm.Store().Save(store); err != nil {
@@ -97,6 +99,24 @@ func UpdateHandler(cm *ConnectionManager) http.HandlerFunc {
 				}
 				if req.Path != "" {
 					store.Profiles[i].Path = req.Path
+				}
+				if req.Host != "" {
+					store.Profiles[i].Host = req.Host
+				}
+				if req.Port > 0 {
+					store.Profiles[i].Port = req.Port
+				}
+				if req.User != "" {
+					store.Profiles[i].User = req.User
+				}
+				if req.Password != "" {
+					store.Profiles[i].Password = req.Password
+				}
+				if req.DBName != "" {
+					store.Profiles[i].DBName = req.DBName
+				}
+				if req.SSLMode != "" {
+					store.Profiles[i].SSLMode = req.SSLMode
 				}
 				updated = store.Profiles[i]
 				found = true
@@ -201,7 +221,7 @@ func ConnectHandler(cm *ConnectionManager) http.HandlerFunc {
 
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"connected": true,
-			"database":  target.Path,
+			"database":  cm.DB().Name(),
 		})
 	}
 }

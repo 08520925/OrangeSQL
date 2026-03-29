@@ -46,7 +46,7 @@ func (m *ConnectionManager) Store() *Storage {
 // SwitchTo は指定プロファイルに接続を切り替える。
 // 新 DB 接続に成功したら旧 DB を閉じて差し替える。失敗時は旧接続を維持する。
 func (m *ConnectionManager) SwitchTo(p Profile) error {
-	newDB, err := database.NewSQLite(p.Path)
+	newDB, err := database.New(p.Driver, p.ToConnectionParams())
 	if err != nil {
 		return fmt.Errorf("failed to connect: %w", err)
 	}

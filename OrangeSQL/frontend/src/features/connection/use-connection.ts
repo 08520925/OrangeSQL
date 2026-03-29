@@ -6,7 +6,7 @@ import {
   deleteProfile,
   connectProfile,
 } from "../../shared/api";
-import type { ConnectionProfile } from "./types";
+import type { ConnectionProfile, CreateProfileRequest, UpdateProfileRequest } from "./types";
 
 /**
  * 接続プロファイルの管理を担う composable。
@@ -20,7 +20,7 @@ export function useConnection() {
     loading.value = true;
     try {
       const res = await fetchProfiles();
-      profiles.value = res.profiles;
+      profiles.value = res.profiles as ConnectionProfile[];
       activeId.value = res.activeId;
     } catch {
       // エラー時は何もしない
@@ -29,13 +29,13 @@ export function useConnection() {
     }
   }
 
-  async function create(name: string, driver: string, path: string): Promise<void> {
-    await createProfile({ name, driver, path });
+  async function create(req: CreateProfileRequest): Promise<void> {
+    await createProfile(req);
     await refresh();
   }
 
-  async function update(id: string, name: string, path: string): Promise<void> {
-    await updateProfile(id, { name, path });
+  async function update(id: string, req: UpdateProfileRequest): Promise<void> {
+    await updateProfile(id, req);
     await refresh();
   }
 

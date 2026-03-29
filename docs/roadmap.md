@@ -22,20 +22,21 @@
 - profiles.json で永続化（~/.orangesql/）
 - 仕様書: `docs/spec/phase3-connection.md`
 
+### Phase 4: マルチDB対応
+- PostgreSQL ドライバ追加（`github.com/jackc/pgx/v5`）
+- MySQL ドライバ追加（`github.com/go-sql-driver/mysql`）
+- SQL Server ドライバ追加（`github.com/microsoft/go-mssqldb`）
+- Database ファクトリ（`database.New(driver, params)`）で接続を抽象化
+- scanRows / execStatement 共通化
+- スキーマ取得（テーブル一覧・カラム情報）を DB 毎に対応
+- 接続ダイアログでドライバ切り替え → フォームフィールド動的変更
+- Profile に TCP 系接続パラメータ（host, port, user, password, dbName, sslMode）を追加
+- ドライバ別バリデーション
+- 仕様書: `docs/spec/phase4-multi-db.md`
+
 ---
 
 ## 今後
-
-### Phase 4: マルチDB対応
-複数の DB エンジンに接続できるようにする。
-
-- PostgreSQL ドライバ追加（`github.com/lib/pq` or `github.com/jackc/pgx`）
-- MySQL ドライバ追加（`github.com/go-sql-driver/mysql`）
-- SQL Server ドライバ追加（`github.com/microsoft/go-mssqldb`）
-- Database interface の実装を各 DB 向けに作成
-- スキーマ取得（テーブル一覧・カラム情報）を DB 毎に対応
-- 接続ダイアログに DB 固有の接続設定（ホスト・ポート・ユーザー・パスワード等）
-- ConnectionProfile に接続パラメータを追加（driver 別の設定）
 
 ### Phase 5: テーブルデータ編集
 結果グリッド上で直接データを編集できるようにする。

@@ -50,17 +50,17 @@ export function fetchHealth(): Promise<{ status: string; database: string }> {
 }
 
 /** プロファイル一覧を取得する */
-export function fetchProfiles(): Promise<{ profiles: { id: string; name: string; driver: string; path: string; createdAt: string }[]; activeId: string }> {
+export function fetchProfiles(): Promise<{ profiles: { id: string; name: string; driver: string; path?: string; host?: string; port?: number; user?: string; password?: string; dbName?: string; sslMode?: string; createdAt: string }[]; activeId: string }> {
   return request("/profiles");
 }
 
 /** プロファイルを作成する */
-export function createProfile(data: { name: string; driver: string; path: string }): Promise<unknown> {
+export function createProfile(data: { name: string; driver: string; path?: string; host?: string; port?: number; user?: string; password?: string; dbName?: string; sslMode?: string }): Promise<unknown> {
   return request("/profiles", { method: "POST", body: JSON.stringify(data) });
 }
 
 /** プロファイルを更新する */
-export function updateProfile(id: string, data: { name: string; path: string }): Promise<unknown> {
+export function updateProfile(id: string, data: { name?: string; path?: string; host?: string; port?: number; user?: string; password?: string; dbName?: string; sslMode?: string }): Promise<unknown> {
   return request(`/profiles/${id}`, { method: "PUT", body: JSON.stringify(data) });
 }
 

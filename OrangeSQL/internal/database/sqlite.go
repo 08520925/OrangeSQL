@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "modernc.org/sqlite"
+	_ "modernc.org/sqlite" // SQLite ドライバ登録
 )
 
 // SQLite は modernc.org/sqlite を使った Database 実装。
@@ -41,62 +41,11 @@ func (s *SQLite) Query(q string) (QueryResult, error) {
 		return QueryResult{}, err
 	}
 	defer rows.Close()
-
-	cols, err := rows.Columns()
-	if err != nil {
-		return QueryResult{}, err
-	}
-
-	result := QueryResult{
-		Columns: cols,
-		Rows:    make([][]*string, 0),
-	}
-
-	raw := make([]interface{}, len(cols))
-	ptrs := make([]interface{}, len(cols))
-	for i := range raw {
-		ptrs[i] = &raw[i]
-	}
-
-	for rows.Next() {
-		if err := rows.Scan(ptrs...); err != nil {
-			return QueryResult{}, err
-		}
-		row := make([]*string, len(cols))
-		for i, v := range raw {
-			if v == nil {
-				row[i] = nil
-				continue
-			}
-			var s string
-			switch t := v.(type) {
-			case []byte:
-				s = fmt.Sprintf("[BLOB (%d bytes)]", len(t))
-			default:
-				s = fmt.Sprint(t)
-			}
-			row[i] = &s
-		}
-		result.Rows = append(result.Rows, row)
-	}
-
-	if err := rows.Err(); err != nil {
-		return QueryResult{}, err
-	}
-
-	return result, nil
+	return scanRows(rows)
 }
 
 func (s *SQLite) Exec(q string) (ExecResult, error) {
-	res, err := s.db.Exec(q)
-	if err != nil {
-		return ExecResult{}, err
-	}
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return ExecResult{}, err
-	}
-	return ExecResult{AffectedRows: affected}, nil
+	return execStatement(s.db, q)
 }
 
 func (s *SQLite) Tables() ([]TableInfo, error) {

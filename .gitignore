@@ -1,13 +1,35 @@
-# Wails build artifacts
+# Build output
 OrangeSQL/build/bin
+OrangeSQL/orangesql.exe
 
 # Frontend
 OrangeSQL/frontend/dist
 OrangeSQL/frontend/node_modules
 
-# Build output
-OrangeSQL/orangesql.exe
-
 # Local database
 OrangeSQL/test.db
 OrangeSQL/data.db
+*.db
+
+# Node (root level leftovers)
+node_modules/
+package.json
+package-lock.json
+
+# Debug screenshots
+*.png
+
+# Claude Code
+.claude/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# E2E test results
+OrangeSQL/frontend/test-results/
+OrangeSQL/frontend/playwright-report/

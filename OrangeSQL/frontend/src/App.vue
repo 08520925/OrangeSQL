@@ -13,7 +13,7 @@ import { useSchema } from "./features/schema-sidebar/use-schema";
 import { useTabs } from "./features/tab-bar/use-tabs";
 import { useResize } from "./features/resize-handle/use-resize";
 import { useConnection } from "./features/connection/use-connection";
-import type { ConnectionProfile } from "./features/connection/types";
+import type { ConnectionProfile, CreateProfileRequest } from "./features/connection/types";
 
 const editorRef = ref<InstanceType<typeof SqlEditor> | null>(null);
 const { state, execute } = useResults();
@@ -75,8 +75,8 @@ async function handleConnect(id: string): Promise<void> {
   state.value = { kind: "idle" };
 }
 
-async function handleCreateProfile(name: string, driver: string, path: string): Promise<void> {
-  await create(name, driver, path);
+async function handleCreateProfile(req: CreateProfileRequest): Promise<void> {
+  await create(req);
   showNewDialog.value = false;
   // 作成後に最新プロファイルに接続
   const latest = profiles.value[profiles.value.length - 1];
@@ -85,9 +85,9 @@ async function handleCreateProfile(name: string, driver: string, path: string): 
   }
 }
 
-async function handleUpdateProfile(name: string, _driver: string, path: string): Promise<void> {
+async function handleUpdateProfile(req: CreateProfileRequest): Promise<void> {
   if (editingProfile.value != null) {
-    await update(editingProfile.value.id, name, path);
+    await update(editingProfile.value.id, req);
     editingProfile.value = undefined;
   }
 }

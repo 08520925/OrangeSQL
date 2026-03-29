@@ -27,7 +27,11 @@ func main() {
 
 	// 初回起動: プロファイルが空なら -db フラグの値で初期プロファイルを作成
 	if len(store.Profiles) == 0 {
-		p := profile.NewProfile("1", "Default", "sqlite", *dbPath)
+		p := profile.NewProfile("1", profile.CreateRequest{
+			Name:   "Default",
+			Driver: "sqlite",
+			Path:   *dbPath,
+		})
 		store.Profiles = append(store.Profiles, p)
 		store.LastUsedID = "1"
 		if err := storage.Save(store); err != nil {
@@ -49,7 +53,7 @@ func main() {
 		connectProfile = store.Profiles[0]
 	}
 
-	db, err := database.NewSQLite(connectProfile.Path)
+	db, err := database.New(connectProfile.Driver, connectProfile.ToConnectionParams())
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
@@ -61,7 +65,7 @@ func main() {
 
 	addr := ":5522"
 	fmt.Printf("OrangeSQL server starting on http://localhost%s\n", addr)
-	fmt.Printf("Profile: %s (%s)\n", connectProfile.Name, connectProfile.Path)
+	fmt.Printf("Profile: %s (%s)\n", connectProfile.Name, db.Name())
 
 	if err := http.ListenAndServe(addr, router); err != nil {
 		log.Fatalf("server error: %v", err)

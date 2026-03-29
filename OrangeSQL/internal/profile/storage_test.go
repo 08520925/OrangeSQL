@@ -35,7 +35,7 @@ func TestStorage_SaveAndLoad(t *testing.T) {
 
 	store := profile.ProfileStore{
 		Profiles: []profile.Profile{
-			profile.NewProfile("1", "TestDB", "sqlite", "/tmp/test.db"),
+			profile.NewProfile("1", profile.CreateRequest{Name: "TestDB", Driver: "sqlite", Path: "/tmp/test.db"}),
 		},
 		LastUsedID: "1",
 	}
@@ -70,7 +70,7 @@ func TestStorage_CreateDir(t *testing.T) {
 
 	store := profile.ProfileStore{
 		Profiles: []profile.Profile{
-			profile.NewProfile("1", "DB", "sqlite", "/tmp/db"),
+			profile.NewProfile("1", profile.CreateRequest{Name: "DB", Driver: "sqlite", Path: "/tmp/db"}),
 		},
 	}
 	if err := s.Save(store); err != nil {
