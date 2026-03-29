@@ -2,8 +2,10 @@ package server
 
 import (
 	"encoding/json"
+	"io/fs"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"OrangeSQL/internal/exec"
@@ -14,7 +16,8 @@ import (
 
 // NewRouter は API ルーティングを設定した http.Handler を返す。
 // 全ハンドラは cm.DB() 経由で現在の DB 接続にアクセスする。
-func NewRouter(cm *profile.ConnectionManager) http.Handler {
+// staticFS が nil でなければ、API 以外のリクエストに埋め込みファイルを返す。
+func NewRouter(cm *profile.ConnectionManager, staticFS fs.FS) http.Handler {
 	mux := http.NewServeMux()
 
 	// DB を使うハンドラはラムダで cm.DB() を渡す
@@ -56,6 +59,27 @@ func NewRouter(cm *profile.ConnectionManager) http.Handler {
 			"database": db.Name(),
 		})
 	})
+
+	// 静的ファイル配信（埋め込みフロントエンド）
+	if staticFS != nil {
+		fileServer := http.FileServerFS(staticFS)
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			// API リクエストはここに来ない（上で登録済み）
+			// 存在しないパスは index.html にフォールバック（SPA 対応）
+			path := r.URL.Path
+			if path != "/" && !strings.HasPrefix(path, "/api/") {
+				// ファイルが存在するか確認
+				f, err := staticFS.Open(strings.TrimPrefix(path, "/"))
+				if err != nil {
+					// ファイルが見つからなければ index.html を返す
+					r.URL.Path = "/"
+				} else {
+					f.Close()
+				}
+			}
+			fileServer.ServeHTTP(w, r)
+		})
+	}
 
 	return withCORS(withLogging(mux))
 }

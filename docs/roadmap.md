@@ -52,6 +52,14 @@
 - クリップボードコピー: CSV / Markdown テーブル形式
 - 仕様書: `docs/spec/phase6-autocomplete-export.md`
 
+### Phase 7: シングルバイナリ配布
+- `go:embed` でフロントエンド（frontend/dist）を exe に埋め込み
+- exe 単体で起動 → API + 静的ファイル配信（dev サーバー不要）
+- 起動時にデフォルトブラウザ自動オープン（`--no-browser` で抑制）
+- SPA フォールバック対応
+- `build.sh` でフロントビルド → Go ビルドを一発実行
+- 仕様書: `docs/spec/phase7-single-binary.md`
+
 ---
 
 ## 検討中（Phase 未定）
@@ -61,4 +69,3 @@
 - ライト/ダークテーマ切り替え
 - サイドバー幅リサイズ
 - タブタイトルの編集
-- Go embed によるシングルバイナリ配布
