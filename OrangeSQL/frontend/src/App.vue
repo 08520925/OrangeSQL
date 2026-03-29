@@ -5,23 +5,27 @@ import SqlEditor from "./features/sql-editor/SqlEditor.vue";
 import ResultsPanel from "./features/results-panel/ResultsPanel.vue";
 import SchemaSidebar from "./features/schema-sidebar/SchemaSidebar.vue";
 import ResizeHandle from "./features/resize-handle/ResizeHandle.vue";
+import ConnectionDropdown from "./features/connection/ConnectionDropdown.vue";
+import ConnectionDialog from "./features/connection/ConnectionDialog.vue";
+import ConnectionManagerVue from "./features/connection/ConnectionManager.vue";
 import { useResults } from "./features/results-panel/use-results";
 import { useSchema } from "./features/schema-sidebar/use-schema";
 import { useTabs } from "./features/tab-bar/use-tabs";
 import { useResize } from "./features/resize-handle/use-resize";
-import { fetchHealth } from "./shared/api";
+import { useConnection } from "./features/connection/use-connection";
+import type { ConnectionProfile } from "./features/connection/types";
 
 const editorRef = ref<InstanceType<typeof SqlEditor> | null>(null);
 const { state, execute } = useResults();
 const { tables, loading: schemaLoading, refresh: refreshSchema } = useSchema();
 const { tabs, activeTabId, activeTab, addTab, closeTab, switchTab, updateSql, updateResult } = useTabs();
 const { editorRatio, onMouseDown } = useResize(".content-area");
+const { profiles, activeId, connect, create, update, remove } = useConnection();
 
-const dbName = ref<string>("");
-
-fetchHealth()
-  .then((h) => { dbName.value = h.database; })
-  .catch(() => { dbName.value = "未接続"; });
+// ダイアログ状態
+const showNewDialog = ref<boolean>(false);
+const showManagerDialog = ref<boolean>(false);
+const editingProfile = ref<ConnectionProfile | undefined>(undefined);
 
 // タブ切り替え時にエディタの内容を復元
 watch(activeTabId, () => {
@@ -49,11 +53,6 @@ async function handleExecute(): Promise<void> {
   await execute(sql);
 }
 
-function handleSqlChange(): void {
-  const sql = editorRef.value?.getValue() ?? "";
-  updateSql(sql);
-}
-
 function handleSelectTable(tableName: string): void {
   const sql = `SELECT * FROM ${tableName} LIMIT 100`;
   editorRef.value?.setValue(sql);
@@ -61,10 +60,45 @@ function handleSelectTable(tableName: string): void {
 }
 
 function handleSwitchTab(id: string): void {
-  // 現在のタブのSQLを保存
   const currentSql = editorRef.value?.getValue() ?? "";
   updateSql(currentSql);
   switchTab(id);
+}
+
+async function handleConnect(id: string): Promise<void> {
+  await connect(id);
+  void refreshSchema();
+  // 全タブの結果をリセット
+  for (const tab of tabs.value) {
+    tab.result = { kind: "idle" };
+  }
+  state.value = { kind: "idle" };
+}
+
+async function handleCreateProfile(name: string, driver: string, path: string): Promise<void> {
+  await create(name, driver, path);
+  showNewDialog.value = false;
+  // 作成後に最新プロファイルに接続
+  const latest = profiles.value[profiles.value.length - 1];
+  if (latest != null) {
+    await handleConnect(latest.id);
+  }
+}
+
+async function handleUpdateProfile(name: string, _driver: string, path: string): Promise<void> {
+  if (editingProfile.value != null) {
+    await update(editingProfile.value.id, name, path);
+    editingProfile.value = undefined;
+  }
+}
+
+async function handleDeleteProfile(id: string): Promise<void> {
+  await remove(id);
+}
+
+function handleEdit(p: ConnectionProfile): void {
+  showManagerDialog.value = false;
+  editingProfile.value = p;
 }
 
 function statusText(): string {
@@ -86,7 +120,13 @@ function statusText(): string {
   <div class="app-layout">
     <header class="header-bar">
       <span class="app-name">OrangeSQL</span>
-      <span class="db-info">{{ dbName }}</span>
+      <ConnectionDropdown
+        :profiles="profiles"
+        :active-id="activeId"
+        @connect="handleConnect"
+        @open-new="showNewDialog = true"
+        @open-manager="showManagerDialog = true"
+      />
       <button class="execute-btn" :disabled="state.kind === 'loading'" @click="handleExecute">
         ▶ 実行
       </button>
@@ -109,7 +149,7 @@ function statusText(): string {
       </aside>
       <div class="content-area">
         <div class="editor-area" :style="{ flex: `0 0 ${editorRatio * 100}%` }">
-          <SqlEditor ref="editorRef" @execute="handleExecute" @change="handleSqlChange" />
+          <SqlEditor ref="editorRef" @execute="handleExecute" />
         </div>
         <ResizeHandle @mousedown="onMouseDown" />
         <div class="results-area">
@@ -120,55 +160,52 @@ function statusText(): string {
         </div>
       </div>
     </div>
+
+    <!-- ダイアログ -->
+    <ConnectionDialog
+      v-if="showNewDialog"
+      @save="handleCreateProfile"
+      @close="showNewDialog = false"
+    />
+    <ConnectionDialog
+      v-if="editingProfile != null"
+      :edit-profile="editingProfile"
+      @save="handleUpdateProfile"
+      @close="editingProfile = undefined"
+    />
+    <ConnectionManagerVue
+      v-if="showManagerDialog"
+      :profiles="profiles"
+      :active-id="activeId"
+      @edit="handleEdit"
+      @delete="handleDeleteProfile"
+      @close="showManagerDialog = false"
+    />
   </div>
 </template>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html, body, #app {
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #app { height: 100%; width: 100%; overflow: hidden; }
 
 .app-layout {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #1e1e1e;
-  color: #cccccc;
+  display: flex; flex-direction: column; height: 100%;
+  background: #1e1e1e; color: #cccccc;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 13px;
 }
 
 .header-bar {
-  height: 40px;
-  display: flex;
-  align-items: center;
-  padding: 0 16px;
-  gap: 16px;
-  background: #2d2d2d;
-  border-bottom: 1px solid #404040;
-  flex-shrink: 0;
+  height: 40px; display: flex; align-items: center;
+  padding: 0 16px; gap: 16px;
+  background: #2d2d2d; border-bottom: 1px solid #404040; flex-shrink: 0;
 }
-
 .app-name { font-weight: 600; font-size: 14px; color: #e0e0e0; }
-.db-info { color: #888888; font-size: 12px; }
 
 .execute-btn {
-  margin-left: auto;
-  background: #007acc;
-  color: #ffffff;
-  border: none;
-  padding: 4px 14px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 12px;
+  margin-left: auto; background: #007acc; color: #ffffff;
+  border: none; padding: 4px 14px; border-radius: 3px;
+  cursor: pointer; font-size: 12px;
 }
 .execute-btn:hover { background: #1a8ad4; }
 .execute-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -176,33 +213,18 @@ html, body, #app {
 .main-area { display: flex; flex: 1; min-height: 0; }
 
 .sidebar {
-  width: 250px;
-  background: #252526;
-  border-right: 1px solid #404040;
-  overflow-y: auto;
-  flex-shrink: 0;
+  width: 250px; background: #252526;
+  border-right: 1px solid #404040; overflow-y: auto; flex-shrink: 0;
 }
 
-.content-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
+.content-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .editor-area { min-height: 100px; overflow: hidden; }
-
 .results-area { flex: 1; min-height: 100px; overflow: auto; }
 
 .status-bar {
-  height: 28px;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  background: #007acc;
-  color: #ffffff;
-  font-size: 12px;
-  flex-shrink: 0;
+  height: 28px; display: flex; align-items: center;
+  padding: 0 12px; background: #007acc; color: #ffffff;
+  font-size: 12px; flex-shrink: 0;
 }
 .status-bar.status-error { background: #c72e2e; }
 </style>

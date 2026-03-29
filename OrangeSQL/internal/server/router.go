@@ -6,23 +6,41 @@ import (
 	"net/http"
 	"time"
 
-	"OrangeSQL/internal/database"
 	"OrangeSQL/internal/exec"
+	"OrangeSQL/internal/profile"
 	"OrangeSQL/internal/query"
 	"OrangeSQL/internal/schema"
 )
 
 // NewRouter は API ルーティングを設定した http.Handler を返す。
-func NewRouter(db database.Database) http.Handler {
+// 全ハンドラは cm.DB() 経由で現在の DB 接続にアクセスする。
+func NewRouter(cm *profile.ConnectionManager) http.Handler {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /api/query", query.Handler(db))
-	mux.HandleFunc("POST /api/exec", exec.Handler(db))
-	mux.HandleFunc("GET /api/schema/tables", schema.TablesHandler(db))
-	mux.HandleFunc("GET /api/schema/columns", schema.ColumnsHandler(db))
+	// DB を使うハンドラはラムダで cm.DB() を渡す
+	mux.HandleFunc("POST /api/query", func(w http.ResponseWriter, r *http.Request) {
+		query.Handler(cm.DB())(w, r)
+	})
+	mux.HandleFunc("POST /api/exec", func(w http.ResponseWriter, r *http.Request) {
+		exec.Handler(cm.DB())(w, r)
+	})
+	mux.HandleFunc("GET /api/schema/tables", func(w http.ResponseWriter, r *http.Request) {
+		schema.TablesHandler(cm.DB())(w, r)
+	})
+	mux.HandleFunc("GET /api/schema/columns", func(w http.ResponseWriter, r *http.Request) {
+		schema.ColumnsHandler(cm.DB())(w, r)
+	})
+
+	// プロファイル管理 API
+	mux.HandleFunc("GET /api/profiles", profile.ListHandler(cm))
+	mux.HandleFunc("POST /api/profiles", profile.CreateHandler(cm))
+	mux.HandleFunc("PUT /api/profiles/{id}", profile.UpdateHandler(cm))
+	mux.HandleFunc("DELETE /api/profiles/{id}", profile.DeleteHandler(cm))
+	mux.HandleFunc("POST /api/profiles/{id}/connect", profile.ConnectHandler(cm))
 
 	mux.HandleFunc("GET /api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		db := cm.DB()
 		status := "ok"
 		if _, err := db.Query("SELECT 1"); err != nil {
 			status = "error"
@@ -42,7 +60,7 @@ func withCORS(next http.Handler) http.Handler {
 		origin := r.Header.Get("Origin")
 		if origin == "http://localhost:5173" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 		}
 

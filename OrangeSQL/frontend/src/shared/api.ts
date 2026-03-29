@@ -48,3 +48,28 @@ export function fetchColumns(table: string): Promise<{ columns: { name: string; 
 export function fetchHealth(): Promise<{ status: string; database: string }> {
   return request("/health");
 }
+
+/** プロファイル一覧を取得する */
+export function fetchProfiles(): Promise<{ profiles: { id: string; name: string; driver: string; path: string; createdAt: string }[]; activeId: string }> {
+  return request("/profiles");
+}
+
+/** プロファイルを作成する */
+export function createProfile(data: { name: string; driver: string; path: string }): Promise<unknown> {
+  return request("/profiles", { method: "POST", body: JSON.stringify(data) });
+}
+
+/** プロファイルを更新する */
+export function updateProfile(id: string, data: { name: string; path: string }): Promise<unknown> {
+  return request(`/profiles/${id}`, { method: "PUT", body: JSON.stringify(data) });
+}
+
+/** プロファイルを削除する */
+export function deleteProfile(id: string): Promise<unknown> {
+  return request(`/profiles/${id}`, { method: "DELETE" });
+}
+
+/** プロファイルに接続する */
+export function connectProfile(id: string): Promise<{ connected: boolean; database: string }> {
+  return request(`/profiles/${id}/connect`, { method: "POST" });
+}

@@ -35,7 +35,7 @@ test.describe("OrangeSQL ワークベンチ", () => {
   test("画面が正しく表示される", async ({ page }) => {
     // ヘッダー
     await expect(page.locator(".app-name")).toHaveText("OrangeSQL");
-    await expect(page.locator(".db-info")).toContainText("data.db");
+    await expect(page.locator(".dropdown-trigger")).toBeVisible();
 
     // 実行ボタン
     await expect(page.locator(".execute-btn")).toBeVisible();
