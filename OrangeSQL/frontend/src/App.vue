@@ -68,7 +68,7 @@ function handleEditError(message: string): void {
 }
 
 function handleSelectTable(tableName: string): void {
-  const sql = `SELECT * FROM ${tableName} LIMIT 100`;
+  const sql = `SELECT * FROM ${tableName} LIMIT 100;`;
   editorRef.value?.setValue(sql);
   updateSql(sql);
 }
