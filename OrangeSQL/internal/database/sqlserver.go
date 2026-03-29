@@ -45,6 +45,10 @@ func (s *SQLServer) Exec(q string) (ExecResult, error) {
 	return execStatement(s.db, q)
 }
 
+func (s *SQLServer) ExecBatch(statements []string) (int64, error) {
+	return execBatch(s.db, statements)
+}
+
 func (s *SQLServer) Tables() ([]TableInfo, error) {
 	rows, err := s.db.Query(`
 		SELECT TABLE_NAME,

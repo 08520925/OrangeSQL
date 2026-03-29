@@ -34,19 +34,14 @@
 - ドライバ別バリデーション
 - 仕様書: `docs/spec/phase4-multi-db.md`
 
----
-
-## 今後
-
 ### Phase 5: テーブルデータ編集
-結果グリッド上で直接データを編集できるようにする。
-
 - 結果テーブルのセルをダブルクリックでインライン編集
-- 編集内容から UPDATE 文を自動生成して実行
-- 行の追加（INSERT 生成）
-- 行の削除（DELETE 生成）
-- PK が必要（PK がないテーブルは編集不可）
-- 編集前の確認ダイアログ or Undo 機能
+- UPDATE / INSERT / DELETE 文をフロントで自動生成
+- `POST /api/exec/batch` でトランザクション一括実行（全成功 or 全ロールバック）
+- PK 必須（PK がないテーブルは読み取り専用）
+- 単一テーブル SELECT のみ編集可能（JOIN / UNION / GROUP BY 等は読み取り専用）
+- 変更確認ダイアログ + 変更破棄機能
+- 仕様書: `docs/spec/phase5-table-edit.md`
 
 ---
 

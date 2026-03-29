@@ -7,7 +7,7 @@ import (
 const maxRows = 10000
 
 // BuildResponse は database.QueryResult をAPIレスポンスに変換する。
-func BuildResponse(result database.QueryResult, elapsedMs int64) Response {
+func BuildResponse(result database.QueryResult, elapsedMs int64, sql string, db database.Database) Response {
 	truncated := false
 	rows := result.Rows
 	if len(rows) > maxRows {
@@ -29,11 +29,15 @@ func BuildResponse(result database.QueryResult, elapsedMs int64) Response {
 		jsonRows[i] = jsonRow
 	}
 
+	editableTable, pkColumns := DetectEditableTable(sql, result.Columns, db)
+
 	return Response{
 		Columns:       result.Columns,
 		Rows:          jsonRows,
 		RowCount:      len(jsonRows),
 		ExecutionTime: elapsedMs,
 		Truncated:     truncated,
+		EditableTable: editableTable,
+		PKColumns:     pkColumns,
 	}
 }

@@ -1,9 +1,27 @@
 <script setup lang="ts">
 import type { ResultState } from "./types";
+import type { QueryResult } from "../../shared/types";
+import EditableTable from "./EditableTable.vue";
 
-defineProps<{
+const props = defineProps<{
   state: ResultState;
+  lastSql?: string;
 }>();
+
+const emit = defineEmits<{
+  refreshResult: [data: QueryResult];
+  editError: [message: string];
+}>();
+
+function isEditable(state: ResultState): boolean {
+  return (
+    state.kind === "query" &&
+    state.data.editableTable != null &&
+    state.data.editableTable !== "" &&
+    state.data.pkColumns != null &&
+    state.data.pkColumns.length > 0
+  );
+}
 </script>
 
 <template>
@@ -24,25 +42,36 @@ defineProps<{
       {{ state.data.affectedRows }} 行に影響 ({{ state.data.executionTimeMs }}ms)
     </div>
 
-    <div v-else-if="state.kind === 'query'" class="table-wrapper">
-      <div v-if="state.data.truncated" class="truncated-notice">
-        結果が 10,000 行で切り詰められました
+    <template v-else-if="state.kind === 'query'">
+      <!-- 編集可能テーブル -->
+      <EditableTable
+        v-if="isEditable(state)"
+        :data="state.data"
+        :original-sql="lastSql ?? ''"
+        @refresh="(d: QueryResult) => emit('refreshResult', d)"
+        @error="(m: string) => emit('editError', m)"
+      />
+      <!-- 読み取り専用テーブル -->
+      <div v-else class="table-wrapper">
+        <div v-if="state.data.truncated" class="truncated-notice">
+          結果が 10,000 行で切り詰められました
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th v-for="col in state.data.columns" :key="col">{{ col }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, i) in state.data.rows" :key="i">
+              <td v-for="(cell, j) in row" :key="j" :class="{ 'null-cell': cell === null }">
+                {{ cell === null ? 'NULL' : cell }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <table>
-        <thead>
-          <tr>
-            <th v-for="col in state.data.columns" :key="col">{{ col }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(row, i) in state.data.rows" :key="i">
-            <td v-for="(cell, j) in row" :key="j" :class="{ 'null-cell': cell === null }">
-              {{ cell === null ? 'NULL' : cell }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    </template>
   </div>
 </template>
 

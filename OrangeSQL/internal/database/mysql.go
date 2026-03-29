@@ -45,6 +45,10 @@ func (m *MySQL) Exec(q string) (ExecResult, error) {
 	return execStatement(m.db, q)
 }
 
+func (m *MySQL) ExecBatch(statements []string) (int64, error) {
+	return execBatch(m.db, statements)
+}
+
 func (m *MySQL) Tables() ([]TableInfo, error) {
 	rows, err := m.db.Query(`
 		SELECT table_name,

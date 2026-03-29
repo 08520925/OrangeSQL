@@ -48,6 +48,10 @@ func (s *SQLite) Exec(q string) (ExecResult, error) {
 	return execStatement(s.db, q)
 }
 
+func (s *SQLite) ExecBatch(statements []string) (int64, error) {
+	return execBatch(s.db, statements)
+}
+
 func (s *SQLite) Tables() ([]TableInfo, error) {
 	rows, err := s.db.Query(
 		"SELECT name, type FROM sqlite_master WHERE type IN ('table', 'view') ORDER BY name",

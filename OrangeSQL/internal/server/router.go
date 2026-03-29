@@ -24,6 +24,9 @@ func NewRouter(cm *profile.ConnectionManager) http.Handler {
 	mux.HandleFunc("POST /api/exec", func(w http.ResponseWriter, r *http.Request) {
 		exec.Handler(cm.DB())(w, r)
 	})
+	mux.HandleFunc("POST /api/exec/batch", func(w http.ResponseWriter, r *http.Request) {
+		exec.BatchHandler(cm.DB())(w, r)
+	})
 	mux.HandleFunc("GET /api/schema/tables", func(w http.ResponseWriter, r *http.Request) {
 		schema.TablesHandler(cm.DB())(w, r)
 	})

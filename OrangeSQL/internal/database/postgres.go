@@ -45,6 +45,10 @@ func (p *Postgres) Exec(q string) (ExecResult, error) {
 	return execStatement(p.db, q)
 }
 
+func (p *Postgres) ExecBatch(statements []string) (int64, error) {
+	return execBatch(p.db, statements)
+}
+
 func (p *Postgres) Tables() ([]TableInfo, error) {
 	rows, err := p.db.Query(`
 		SELECT table_name,

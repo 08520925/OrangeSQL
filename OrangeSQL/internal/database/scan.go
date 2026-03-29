@@ -65,3 +65,32 @@ func execStatement(db *sql.DB, q string) (ExecResult, error) {
 	}
 	return ExecResult{AffectedRows: affected}, nil
 }
+
+// execBatch は複数 SQL をトランザクション内で一括実行する共通ヘルパー。
+// いずれかが失敗した場合はロールバックしてエラーを返す。
+func execBatch(db *sql.DB, statements []string) (int64, error) {
+	tx, err := db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("begin transaction: %w", err)
+	}
+
+	var total int64
+	for i, stmt := range statements {
+		res, err := tx.Exec(stmt)
+		if err != nil {
+			tx.Rollback()
+			return 0, fmt.Errorf("statement %d: %w", i+1, err)
+		}
+		affected, err := res.RowsAffected()
+		if err != nil {
+			tx.Rollback()
+			return 0, fmt.Errorf("statement %d rows affected: %w", i+1, err)
+		}
+		total += affected
+	}
+
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("commit: %w", err)
+	}
+	return total, nil
+}

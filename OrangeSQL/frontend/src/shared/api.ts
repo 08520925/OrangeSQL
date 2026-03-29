@@ -1,4 +1,4 @@
-import type { QueryResult, ExecResult, ApiError } from "./types";
+import type { QueryResult, ExecResult, BatchExecResult, ApiError } from "./types";
 
 const BASE_URL = "/api";
 
@@ -42,6 +42,14 @@ export function fetchTables(): Promise<{ tables: { name: string; type: string }[
 /** カラム情報を取得する */
 export function fetchColumns(table: string): Promise<{ columns: { name: string; type: string; pk: boolean; notNull: boolean }[] }> {
   return request(`/schema/columns?table=${encodeURIComponent(table)}`);
+}
+
+/** 複数 SQL をトランザクション内で一括実行する */
+export function execBatch(statements: string[]): Promise<BatchExecResult> {
+  return request<BatchExecResult>("/exec/batch", {
+    method: "POST",
+    body: JSON.stringify({ statements }),
+  });
 }
 
 /** ヘルスチェック */

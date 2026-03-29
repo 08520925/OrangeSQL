@@ -7,6 +7,9 @@ type Database interface {
 	Query(sql string) (QueryResult, error)
 	// Exec は INSERT/UPDATE/DELETE/DDL を実行し、影響行数を返す。
 	Exec(sql string) (ExecResult, error)
+	// ExecBatch は複数 SQL をトランザクション内で一括実行する。
+	// いずれかが失敗した場合はロールバックしてエラーを返す。
+	ExecBatch(statements []string) (totalAffected int64, err error)
 	// Tables はテーブル・ビュー一覧を返す。
 	Tables() ([]TableInfo, error)
 	// Columns は指定テーブルのカラム情報を返す。

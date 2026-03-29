@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from "vue";
+import type { QueryResult } from "./shared/types";
 import TabBar from "./features/tab-bar/TabBar.vue";
 import SqlEditor from "./features/sql-editor/SqlEditor.vue";
 import ResultsPanel from "./features/results-panel/ResultsPanel.vue";
@@ -21,6 +22,9 @@ const { tables, loading: schemaLoading, refresh: refreshSchema } = useSchema();
 const { tabs, activeTabId, activeTab, addTab, closeTab, switchTab, updateSql, updateResult } = useTabs();
 const { editorRatio, onMouseDown } = useResize(".content-area");
 const { profiles, activeId, connect, create, update, remove } = useConnection();
+
+// 最後に実行した SQL（編集モードの再取得用）
+const lastExecutedSql = ref<string>("");
 
 // ダイアログ状態
 const showNewDialog = ref<boolean>(false);
@@ -50,7 +54,16 @@ async function handleExecute(): Promise<void> {
   const fullSql = editorRef.value?.getValue() ?? "";
   updateSql(fullSql);
   const sql = editorRef.value?.getStatementAtCursor() ?? "";
+  lastExecutedSql.value = sql;
   await execute(sql);
+}
+
+function handleRefreshResult(data: QueryResult): void {
+  state.value = { kind: "query", data };
+}
+
+function handleEditError(message: string): void {
+  state.value = { kind: "error", message };
 }
 
 function handleSelectTable(tableName: string): void {
@@ -153,7 +166,12 @@ function statusText(): string {
         </div>
         <ResizeHandle @mousedown="onMouseDown" />
         <div class="results-area">
-          <ResultsPanel :state="state" />
+          <ResultsPanel
+            :state="state"
+            :last-sql="lastExecutedSql"
+            @refresh-result="handleRefreshResult"
+            @edit-error="handleEditError"
+          />
         </div>
         <div class="status-bar" :class="{ 'status-error': state.kind === 'error' }">
           <span>{{ statusText() }}</span>

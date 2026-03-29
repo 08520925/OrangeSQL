@@ -56,9 +56,9 @@ test.describe("OrangeSQL ワークベンチ", () => {
 
     // カラムヘッダ
     const headers = page.locator("th");
-    await expect(headers.nth(0)).toHaveText("id");
-    await expect(headers.nth(1)).toHaveText("name");
-    await expect(headers.nth(2)).toHaveText("email");
+    await expect(headers.nth(0)).toContainText("id");
+    await expect(headers.nth(1)).toContainText("name");
+    await expect(headers.nth(2)).toContainText("email");
 
     // 行数
     const rows = page.locator("tbody tr");

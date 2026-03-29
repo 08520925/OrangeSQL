@@ -1,34 +1,34 @@
-package query
+package exec
 
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 	"time"
 
 	"OrangeSQL/internal/database"
 )
 
-// Handler は POST /api/query のHTTPハンドラを返す。
-func Handler(db database.Database) http.HandlerFunc {
+// BatchHandler は POST /api/exec/batch のHTTPハンドラを返す。
+// 複数 SQL をトランザクション内で一括実行する。
+func BatchHandler(db database.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		var req Request
+		var req BatchRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(ErrorResponse{Error: "invalid JSON"})
 			return
 		}
 
-		if strings.TrimSpace(req.SQL) == "" {
+		if len(req.Statements) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(ErrorResponse{Error: "sql field is required"})
+			json.NewEncoder(w).Encode(ErrorResponse{Error: "statements field is required"})
 			return
 		}
 
 		start := time.Now()
-		result, err := db.Query(req.SQL)
+		total, err := db.ExecBatch(req.Statements)
 		elapsed := time.Since(start).Milliseconds()
 
 		if err != nil {
@@ -37,7 +37,9 @@ func Handler(db database.Database) http.HandlerFunc {
 			return
 		}
 
-		resp := BuildResponse(result, elapsed, req.SQL, db)
-		json.NewEncoder(w).Encode(resp)
+		json.NewEncoder(w).Encode(BatchResponse{
+			TotalAffectedRows: total,
+			ExecutionTime:     elapsed,
+		})
 	}
 }
