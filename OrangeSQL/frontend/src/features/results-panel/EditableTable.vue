@@ -266,13 +266,14 @@ th {
   padding: 2px 4px;
   border-radius: 3px;
 }
+.btn-delete { color: #cc6666; }
 .btn-delete:hover { background: #3a3a3a; }
 .btn-undo-delete { color: #4ec9b0; }
 
 .deleted-row td {
   text-decoration: line-through;
-  background: #3a1010;
-  opacity: 0.6;
+  background: #4a1a1a;
+  color: #cc6666;
 }
 
 .new-row td {
@@ -298,7 +299,7 @@ th {
 .cell-input:focus { border-color: #007acc; }
 
 tr:hover td { background: #2a2d2e; }
-.deleted-row:hover td { background: #3a1010; }
+.deleted-row:hover td { background: #552222; }
 .new-row:hover td { background: #1a2a1a; }
 
 /* Dialog */
