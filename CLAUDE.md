@@ -86,6 +86,7 @@ cd OrangeSQL/frontend && pnpm add <package>
 - ファイル名で中身がわかる命名（`utils.ts` 等の曖昧な名前を避ける）
 - バーティカルスライス構成: 機能単位で handler/service/types をコロケーション
 - 仕様駆動: 仕様書 → GitHub Issue → 実装 → テスト の順で進める
+- 変更ごとに必ず単体テスト（`go test ./internal/...`）→ E2Eテスト（`pnpm test:e2e`）を実行してからコミットする
 - 日本語で回答すること
 
 ## 開発フロー

@@ -14,10 +14,26 @@ import (
 	"OrangeSQL/internal/schema"
 )
 
+type config struct {
+	verbose bool
+}
+
+// Option は NewRouter の動作を変更する関数オプション。
+type Option func(*config)
+
+// WithVerbose を指定するとリクエストログを出力する。
+func WithVerbose() Option {
+	return func(c *config) { c.verbose = true }
+}
+
 // NewRouter は API ルーティングを設定した http.Handler を返す。
 // 全ハンドラは cm.DB() 経由で現在の DB 接続にアクセスする。
 // staticFS が nil でなければ、API 以外のリクエストに埋め込みファイルを返す。
-func NewRouter(cm *profile.ConnectionManager, staticFS fs.FS) http.Handler {
+func NewRouter(cm *profile.ConnectionManager, staticFS fs.FS, opts ...Option) http.Handler {
+	cfg := config{}
+	for _, o := range opts {
+		o(&cfg)
+	}
 	mux := http.NewServeMux()
 
 	// DB を使うハンドラはラムダで cm.DB() を渡す
@@ -81,7 +97,11 @@ func NewRouter(cm *profile.ConnectionManager, staticFS fs.FS) http.Handler {
 		})
 	}
 
-	return withCORS(withLogging(mux))
+	var handler http.Handler = mux
+	if cfg.verbose {
+		handler = withLogging(handler)
+	}
+	return withCORS(handler)
 }
 
 // withCORS は開発時の CORS ヘッダーを付与するミドルウェア。

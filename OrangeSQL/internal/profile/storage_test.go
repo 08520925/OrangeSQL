@@ -3,6 +3,7 @@ package profile_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"OrangeSQL/internal/profile"
@@ -99,5 +100,30 @@ func TestNextID_Empty(t *testing.T) {
 	id := profile.NextID(store)
 	if id != "1" {
 		t.Fatalf("expected '1', got '%s'", id)
+	}
+}
+
+func TestDataDir_UsesUserConfigDir(t *testing.T) {
+	dir := profile.DataDir()
+	if dir == "" {
+		t.Fatal("DataDir returned empty string")
+	}
+	// OS 標準のデータディレクトリ配下に OrangeSQL が含まれること
+	if !filepath.IsAbs(dir) {
+		t.Fatalf("expected absolute path, got: %s", dir)
+	}
+	if filepath.Base(dir) != "OrangeSQL" {
+		t.Fatalf("expected dir to end with 'OrangeSQL', got: %s", dir)
+	}
+}
+
+func TestDefaultPath_UnderDataDir(t *testing.T) {
+	p := profile.DefaultPath()
+	dataDir := profile.DataDir()
+	if !strings.HasPrefix(p, dataDir) {
+		t.Fatalf("expected DefaultPath (%s) to be under DataDir (%s)", p, dataDir)
+	}
+	if filepath.Base(p) != "profiles.json" {
+		t.Fatalf("expected filename 'profiles.json', got: %s", filepath.Base(p))
 	}
 }

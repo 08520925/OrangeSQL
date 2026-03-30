@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 
 	"OrangeSQL/internal/database"
@@ -19,8 +20,10 @@ import (
 var frontendFS embed.FS
 
 func main() {
-	dbPath := flag.String("db", "./data.db", "SQLite database file path (used for initial profile)")
+	defaultDB := filepath.Join(profile.DataDir(), "data.db")
+	dbPath := flag.String("db", defaultDB, "SQLite database file path (used for initial profile)")
 	noBrowser := flag.Bool("no-browser", false, "disable auto-opening browser on startup")
+	verbose := flag.Bool("verbose", false, "enable request logging")
 	flag.Parse()
 
 	storage, err := profile.NewStorage(profile.DefaultPath())
@@ -75,7 +78,11 @@ func main() {
 		log.Fatalf("failed to load embedded frontend: %v", err)
 	}
 
-	router := server.NewRouter(cm, distFS)
+	var routerOpts []server.Option
+	if *verbose {
+		routerOpts = append(routerOpts, server.WithVerbose())
+	}
+	router := server.NewRouter(cm, distFS, routerOpts...)
 
 	addr := ":5522"
 	url := "http://localhost" + addr

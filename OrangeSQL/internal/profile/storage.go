@@ -25,10 +25,20 @@ func NewStorage(path string) (*Storage, error) {
 	return &Storage{path: path}, nil
 }
 
+// DataDir は OS 標準のアプリケーションデータディレクトリを返す。
+// Windows: %APPDATA%\OrangeSQL, macOS: ~/Library/Application Support/OrangeSQL, Linux: ~/.config/OrangeSQL
+func DataDir() string {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		home, _ := os.UserHomeDir()
+		dir = home
+	}
+	return filepath.Join(dir, "OrangeSQL")
+}
+
 // DefaultPath は OS に応じたデフォルトの profiles.json パスを返す。
 func DefaultPath() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".orangesql", "profiles.json")
+	return filepath.Join(DataDir(), "profiles.json")
 }
 
 // Load は profiles.json を読み込む。ファイルが存在しない場合は空の store を返す。

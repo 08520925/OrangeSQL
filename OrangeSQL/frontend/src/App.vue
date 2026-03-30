@@ -68,7 +68,10 @@ function handleEditError(message: string): void {
 }
 
 function handleSelectTable(tableName: string): void {
-  const sql = `SELECT * FROM ${tableName} LIMIT 100;`;
+  const activeProfile = profiles.value.find((p) => p.id === activeId.value);
+  const sql = activeProfile?.driver === "sqlserver"
+    ? `SELECT TOP 100 * FROM ${tableName};`
+    : `SELECT * FROM ${tableName} LIMIT 100;`;
   editorRef.value?.setValue(sql);
   updateSql(sql);
 }
