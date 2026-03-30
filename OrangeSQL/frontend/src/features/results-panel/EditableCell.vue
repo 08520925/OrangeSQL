@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick } from "vue";
+import { ref, nextTick, computed } from "vue";
 
 const props = defineProps<{
   value: string | null;
@@ -10,11 +10,20 @@ const props = defineProps<{
 const emit = defineEmits<{
   update: [value: string | null];
   setNull: [];
+  showDetail: [value: string];
 }>();
 
 const editing = ref<boolean>(false);
 const inputRef = ref<HTMLInputElement | null>(null);
 const editValue = ref<string>("");
+
+const isLongText = computed(() => props.value != null && props.value.length > 100);
+
+function openDetail(): void {
+  if (props.value != null) {
+    emit("showDetail", props.value);
+  }
+}
 
 function startEdit(): void {
   if (!props.editable) return;
@@ -65,7 +74,10 @@ function handleKeydown(e: KeyboardEvent): void {
       @blur="confirmEdit"
       @keydown="handleKeydown"
     />
-    <span v-else>{{ value === null ? 'NULL' : value }}</span>
+    <template v-else>
+      <span class="cell-text">{{ value === null ? 'NULL' : value }}</span>
+      <button v-if="isLongText" class="expand-btn" @click.stop="openDetail">…</button>
+    </template>
   </td>
 </template>
 
@@ -77,7 +89,31 @@ td {
   white-space: nowrap;
   cursor: default;
   position: relative;
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+.cell-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.expand-btn {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #007acc;
+  color: #ffffff;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 1px 5px;
+  line-height: 1;
+}
+.expand-btn:hover { background: #1a8ad4; }
 
 .pk-cell {
   background: #2a2a2a;

@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { ref } from "vue";
 import type { ResultState } from "./types";
 import type { QueryResult } from "../../shared/types";
 import EditableTable from "./EditableTable.vue";
 import ExportToolbar from "./ExportToolbar.vue";
+import CellDetailPopup from "./CellDetailPopup.vue";
 
 const props = defineProps<{
   state: ResultState;
@@ -14,6 +16,8 @@ const emit = defineEmits<{
   editError: [message: string];
 }>();
 
+const popupValue = ref<string | null>(null);
+
 function isEditable(state: ResultState): boolean {
   return (
     state.kind === "query" &&
@@ -23,6 +27,7 @@ function isEditable(state: ResultState): boolean {
     state.data.pkColumns.length > 0
   );
 }
+
 </script>
 
 <template>
@@ -68,14 +73,29 @@ function isEditable(state: ResultState): boolean {
           </thead>
           <tbody>
             <tr v-for="(row, i) in state.data.rows" :key="i">
-              <td v-for="(cell, j) in row" :key="j" :class="{ 'null-cell': cell === null }">
+              <td
+                v-for="(cell, j) in row"
+                :key="j"
+                :class="{ 'null-cell': cell === null }"
+              >
                 {{ cell === null ? 'NULL' : cell }}
+                <button
+                  v-if="cell != null && cell.length > 100"
+                  class="expand-btn"
+                  @click="popupValue = cell"
+                >…</button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
     </template>
+
+    <CellDetailPopup
+      v-if="popupValue != null"
+      :value="popupValue"
+      @close="popupValue = null"
+    />
   </div>
 </template>
 
@@ -165,7 +185,27 @@ td {
   border-bottom: 1px solid #333333;
   color: #cccccc;
   white-space: nowrap;
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
 }
+
+.expand-btn {
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #007acc;
+  color: #ffffff;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 1px 5px;
+  line-height: 1;
+}
+.expand-btn:hover { background: #1a8ad4; }
 
 tr:hover td {
   background: #2a2d2e;

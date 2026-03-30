@@ -4,6 +4,7 @@ import type { QueryResult } from "../../shared/types";
 import { execBatch, querySQL } from "../../shared/api";
 import EditableCell from "./EditableCell.vue";
 import ExportToolbar from "./ExportToolbar.vue";
+import CellDetailPopup from "./CellDetailPopup.vue";
 import { useTableEdit } from "./use-table-edit";
 
 const props = defineProps<{
@@ -36,6 +37,7 @@ const {
 
 const showConfirm = ref<boolean>(false);
 const saving = ref<boolean>(false);
+const popupValue = ref<string | null>(null);
 
 function isPKColumn(colIndex: number): boolean {
   return pkColumns.includes(columns[colIndex] ?? "");
@@ -127,6 +129,7 @@ async function handleSave(): Promise<void> {
               :modified="isModified(ri, ci)"
               @update="(v: string | null) => updateCell(ri, ci, v)"
               @set-null="handleSetNull(ri, ci)"
+              @show-detail="(v: string) => popupValue = v"
             />
             <td class="action-col">
               <button
@@ -178,6 +181,12 @@ async function handleSave(): Promise<void> {
         </div>
       </div>
     </div>
+
+    <CellDetailPopup
+      v-if="popupValue != null"
+      :value="popupValue"
+      @close="popupValue = null"
+    />
   </div>
 </template>
 
