@@ -6,6 +6,7 @@ import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { syntaxHighlighting, defaultHighlightStyle } from "@codemirror/language";
 import { autocompletion, acceptCompletion } from "@codemirror/autocomplete";
+import { format as formatSqlText } from "sql-formatter";
 import { sqlCompletionSource, refreshCompletionData } from "./sql-completions";
 import type { SqlEditorApi } from "./types";
 
@@ -40,6 +41,13 @@ export function useSqlEditor(
       {
         key: "Tab",
         run: acceptCompletion,
+      },
+      {
+        key: "Ctrl-q",
+        run: () => {
+          formatSql();
+          return true;
+        },
       },
     ]);
 
@@ -117,5 +125,17 @@ export function useSqlEditor(
     return last?.text ?? doc.trim();
   }
 
-  return { getValue, setValue, getStatementAtCursor, refreshCompletions: refreshCompletionData };
+  function formatSql(): void {
+    if (view == null) return;
+    const text = view.state.doc.toString();
+    if (text.trim() === "") return;
+    const formatted = formatSqlText(text, {
+      language: "sql",
+      tabWidth: 2,
+      keywordCase: "upper",
+    });
+    setValue(formatted);
+  }
+
+  return { getValue, setValue, getStatementAtCursor, refreshCompletions: refreshCompletionData, formatSql };
 }

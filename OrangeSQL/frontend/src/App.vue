@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from "vue";
 import type { QueryResult } from "./shared/types";
+import { fetchColumns } from "./shared/api";
 import TabBar from "./features/tab-bar/TabBar.vue";
 import SqlEditor from "./features/sql-editor/SqlEditor.vue";
 import ResultsPanel from "./features/results-panel/ResultsPanel.vue";
@@ -76,6 +77,21 @@ function handleSelectTable(tableName: string): void {
   updateSql(sql);
 }
 
+async function handleShowTableInfo(tableName: string): Promise<void> {
+  addTab();
+  const tab = activeTab.value;
+  if (tab != null) {
+    tab.title = `${tableName}(情報)`;
+  }
+  try {
+    const res = await fetchColumns(tableName);
+    state.value = { kind: "tableInfo", data: { tableName, columns: res.columns } };
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : String(e);
+    state.value = { kind: "error", message };
+  }
+}
+
 function handleSwitchTab(id: string): void {
   const currentSql = editorRef.value?.getValue() ?? "";
   updateSql(currentSql);
@@ -130,6 +146,8 @@ function statusText(): string {
       const trunc = q.truncated === true ? " [切り詰め]" : "";
       return `${String(q.rowCount)} 行取得 (${String(q.executionTimeMs)}ms)${trunc}`;
     }
+    case "tableInfo":
+      return `テーブル情報: ${state.value.data.tableName} (${String(state.value.data.columns.length)} カラム)`;
   }
 }
 </script>
@@ -145,6 +163,9 @@ function statusText(): string {
         @open-new="showNewDialog = true"
         @open-manager="showManagerDialog = true"
       />
+      <button class="format-btn" title="SQL整形 (Ctrl+Q)" @click="editorRef?.formatSql()">
+        整形
+      </button>
       <button class="execute-btn" :disabled="state.kind === 'loading'" @click="handleExecute">
         ▶ 実行
       </button>
@@ -162,6 +183,7 @@ function statusText(): string {
           :tables="tables"
           :loading="schemaLoading"
           @select-table="handleSelectTable"
+          @show-table-info="handleShowTableInfo"
           @refresh="refreshSchema"
         />
       </aside>
@@ -232,6 +254,13 @@ html, body, #app { height: 100%; width: 100%; overflow: hidden; }
 }
 .execute-btn:hover { background: #1a8ad4; }
 .execute-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.format-btn {
+  background: #3c3c3c; color: #cccccc;
+  border: 1px solid #555555; padding: 4px 12px; border-radius: 3px;
+  cursor: pointer; font-size: 12px;
+}
+.format-btn:hover { background: #4a4a4a; }
 
 .main-area { display: flex; flex: 1; min-height: 0; }
 

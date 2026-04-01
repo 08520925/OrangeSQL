@@ -18,6 +18,7 @@ defineExpose({
   setValue: editorApi.setValue,
   getStatementAtCursor: editorApi.getStatementAtCursor,
   refreshCompletions: editorApi.refreshCompletions,
+  formatSql: editorApi.formatSql,
 });
 </script>
 

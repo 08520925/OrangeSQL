@@ -3,4 +3,5 @@ export type SqlEditorApi = {
   setValue: (sql: string) => void;
   getStatementAtCursor: () => string;
   refreshCompletions: () => Promise<void>;
+  formatSql: () => void;
 };

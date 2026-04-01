@@ -43,4 +43,5 @@ type ColumnInfo struct {
 	Type    string
 	PK      bool
 	NotNull bool
+	Comment string // カラムコメント（論理名）。非対応DBでは空文字。
 }

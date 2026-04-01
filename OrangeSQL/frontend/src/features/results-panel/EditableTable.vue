@@ -146,15 +146,25 @@ async function handleSave(): Promise<void> {
             <td
               v-for="(_col, ci) in columns"
               :key="ci"
-              :class="{ 'pk-cell': isPKColumn(ci) }"
+              :class="{ 'pk-cell': isPKColumn(ci), 'null-new-cell': newRow.values[ci] === null }"
             >
-              <input
-                class="cell-input"
-                :placeholder="isPKColumn(ci) ? '(自動)' : ''"
-                :value="newRow.values[ci] ?? ''"
-                @input="(e: Event) => updateNewRowCell(nri, ci, (e.target as HTMLInputElement).value || null)"
-                @keydown.ctrl.shift.n.prevent="handleNewRowSetNull(nri, ci)"
-              />
+              <div class="new-row-cell">
+                <input
+                  class="cell-input"
+                  :class="{ 'null-input': newRow.values[ci] === null }"
+                  :placeholder="isPKColumn(ci) ? '(自動)' : newRow.values[ci] === null ? 'NULL' : ''"
+                  :value="newRow.values[ci] === null ? '' : (newRow.values[ci] ?? '')"
+                  @input="(e: Event) => updateNewRowCell(nri, ci, (e.target as HTMLInputElement).value || null)"
+                  @keydown.ctrl.shift.n.prevent="handleNewRowSetNull(nri, ci)"
+                />
+                <button
+                  v-if="!isPKColumn(ci)"
+                  class="null-btn-new"
+                  :class="{ 'null-active': newRow.values[ci] === null }"
+                  title="NULLを設定"
+                  @click="handleNewRowSetNull(nri, ci)"
+                >NULL</button>
+              </div>
             </td>
             <td class="action-col"></td>
           </tr>
@@ -306,6 +316,29 @@ th {
   outline: none;
 }
 .cell-input:focus { border-color: #007acc; }
+.cell-input.null-input { color: #666666; font-style: italic; }
+
+.new-row-cell {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.null-btn-new {
+  padding: 1px 4px;
+  background: #3a3a3a;
+  color: #888888;
+  border: 1px solid #555555;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.null-btn-new:hover { background: #5a4000; color: #e0a030; }
+.null-btn-new.null-active { background: #5a4000; color: #e0a030; border-color: #7a6020; }
 
 tr:hover td { background: #2a2d2e; }
 .deleted-row:hover td { background: #552222; }

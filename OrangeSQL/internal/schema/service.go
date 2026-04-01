@@ -30,7 +30,7 @@ func BuildCompletionsResponse(db database.Database) (CompletionsResponse, error)
 		}
 		entries := make([]ColumnEntry, len(cols))
 		for i, c := range cols {
-			entries[i] = ColumnEntry{Name: c.Name, Type: c.Type, PK: c.PK, NotNull: c.NotNull}
+			entries[i] = ColumnEntry{Name: c.Name, Type: c.Type, PK: c.PK, NotNull: c.NotNull, Comment: c.Comment}
 		}
 		result = append(result, CompletionTable{Name: t.Name, Type: t.Type, Columns: entries})
 	}
@@ -41,7 +41,7 @@ func BuildCompletionsResponse(db database.Database) (CompletionsResponse, error)
 func BuildColumnsResponse(cols []database.ColumnInfo) ColumnsResponse {
 	entries := make([]ColumnEntry, len(cols))
 	for i, c := range cols {
-		entries[i] = ColumnEntry{Name: c.Name, Type: c.Type, PK: c.PK, NotNull: c.NotNull}
+		entries[i] = ColumnEntry{Name: c.Name, Type: c.Type, PK: c.PK, NotNull: c.NotNull, Comment: c.Comment}
 	}
 	return ColumnsResponse{Columns: entries}
 }

@@ -79,7 +79,8 @@ func (m *MySQL) Columns(tableName string) ([]ColumnInfo, error) {
 			COLUMN_NAME,
 			COLUMN_TYPE,
 			CASE WHEN IS_NULLABLE = 'NO' THEN true ELSE false END,
-			CASE WHEN COLUMN_KEY = 'PRI' THEN true ELSE false END
+			CASE WHEN COLUMN_KEY = 'PRI' THEN true ELSE false END,
+			COALESCE(COLUMN_COMMENT, '')
 		FROM information_schema.columns
 		WHERE table_schema = DATABASE() AND table_name = ?
 		ORDER BY ORDINAL_POSITION
@@ -92,7 +93,7 @@ func (m *MySQL) Columns(tableName string) ([]ColumnInfo, error) {
 	var columns []ColumnInfo
 	for rows.Next() {
 		var col ColumnInfo
-		if err := rows.Scan(&col.Name, &col.Type, &col.NotNull, &col.PK); err != nil {
+		if err := rows.Scan(&col.Name, &col.Type, &col.NotNull, &col.PK, &col.Comment); err != nil {
 			return nil, err
 		}
 		columns = append(columns, col)

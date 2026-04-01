@@ -48,6 +48,34 @@ function isEditable(state: ResultState): boolean {
       {{ state.data.affectedRows }} 行に影響 ({{ state.data.executionTimeMs }}ms)
     </div>
 
+    <div v-else-if="state.kind === 'tableInfo'" class="table-wrapper">
+      <div class="table-info-header">
+        <span class="table-info-title">{{ state.data.tableName }}</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>カラム名</th>
+            <th>型</th>
+            <th>PK</th>
+            <th>NOT NULL</th>
+            <th>コメント</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="col in state.data.columns" :key="col.name">
+            <td class="pk-icon">{{ col.pk ? '🔑' : '' }}</td>
+            <td class="col-name-cell">{{ col.name }}</td>
+            <td class="col-type-cell">{{ col.type }}</td>
+            <td class="check-cell">{{ col.pk ? '✓' : '' }}</td>
+            <td class="check-cell">{{ col.notNull ? '✓' : '' }}</td>
+            <td class="comment-cell">{{ col.comment }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <template v-else-if="state.kind === 'query'">
       <!-- 編集可能テーブル -->
       <EditableTable
@@ -215,4 +243,22 @@ tr:hover td {
   color: #666666;
   font-style: italic;
 }
+
+.table-info-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #404040;
+}
+.table-info-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #e0a030;
+}
+.pk-icon { width: 24px; text-align: center; font-size: 12px; }
+.col-name-cell { color: #cccccc; font-weight: 600; }
+.col-type-cell { color: #6a9955; }
+.check-cell { text-align: center; color: #4ec9b0; }
+.comment-cell { color: #999999; }
 </style>

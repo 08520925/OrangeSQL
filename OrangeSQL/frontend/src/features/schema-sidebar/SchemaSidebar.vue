@@ -10,6 +10,7 @@ defineProps<{
 
 const emit = defineEmits<{
   selectTable: [tableName: string];
+  showTableInfo: [tableName: string];
   refresh: [];
 }>();
 
@@ -45,7 +46,8 @@ async function toggleExpand(tableName: string): Promise<void> {
           </button>
           <span
             class="table-label"
-            @click="emit('selectTable', table.name)"
+            @click="emit('showTableInfo', table.name)"
+            @dblclick.prevent="emit('selectTable', table.name)"
           >
             <span class="table-icon">{{ table.type === 'view' ? '👁' : '▦' }}</span>
             <span class="table-name">{{ table.name }}</span>

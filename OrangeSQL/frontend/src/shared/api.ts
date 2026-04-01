@@ -40,7 +40,7 @@ export function fetchTables(): Promise<{ tables: { name: string; type: string }[
 }
 
 /** カラム情報を取得する */
-export function fetchColumns(table: string): Promise<{ columns: { name: string; type: string; pk: boolean; notNull: boolean }[] }> {
+export function fetchColumns(table: string): Promise<{ columns: { name: string; type: string; pk: boolean; notNull: boolean; comment: string }[] }> {
   return request(`/schema/columns?table=${encodeURIComponent(table)}`);
 }
 

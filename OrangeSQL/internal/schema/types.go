@@ -22,6 +22,7 @@ type ColumnEntry struct {
 	Type    string `json:"type"`
 	PK      bool   `json:"pk"`
 	NotNull bool   `json:"notNull"`
+	Comment string `json:"comment"`
 }
 
 // CompletionsResponse は GET /api/schema/completions の JSON レスポンス。

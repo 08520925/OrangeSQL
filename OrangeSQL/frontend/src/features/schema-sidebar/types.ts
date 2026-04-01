@@ -8,4 +8,5 @@ export type ColumnEntry = {
   type: string;
   pk: boolean;
   notNull: boolean;
+  comment: string;
 };

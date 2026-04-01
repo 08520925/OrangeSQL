@@ -79,7 +79,11 @@ func (p *Postgres) Columns(tableName string) ([]ColumnInfo, error) {
 			c.column_name,
 			c.data_type,
 			CASE WHEN c.is_nullable = 'NO' THEN true ELSE false END,
-			CASE WHEN kcu.column_name IS NOT NULL THEN true ELSE false END
+			CASE WHEN kcu.column_name IS NOT NULL THEN true ELSE false END,
+			COALESCE(pg_catalog.col_description(
+				(SELECT oid FROM pg_catalog.pg_class WHERE relname = c.table_name AND relnamespace = (SELECT oid FROM pg_catalog.pg_namespace WHERE nspname = c.table_schema)),
+				c.ordinal_position
+			), '')
 		FROM information_schema.columns c
 		LEFT JOIN information_schema.table_constraints tc
 			ON tc.table_schema = c.table_schema
@@ -100,7 +104,7 @@ func (p *Postgres) Columns(tableName string) ([]ColumnInfo, error) {
 	var columns []ColumnInfo
 	for rows.Next() {
 		var col ColumnInfo
-		if err := rows.Scan(&col.Name, &col.Type, &col.NotNull, &col.PK); err != nil {
+		if err := rows.Scan(&col.Name, &col.Type, &col.NotNull, &col.PK, &col.Comment); err != nil {
 			return nil, err
 		}
 		columns = append(columns, col)

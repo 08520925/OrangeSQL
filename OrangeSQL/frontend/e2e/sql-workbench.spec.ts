@@ -91,16 +91,16 @@ test.describe("OrangeSQL ワークベンチ", () => {
     await expect(page.locator(".status-bar")).toHaveClass(/status-error/);
   });
 
-  test("サイドバーのテーブルクリックで SELECT 文が挿入される", async ({ page }) => {
+  test("サイドバーのテーブルダブルクリックで SELECT 文が挿入される", async ({ page }) => {
     await setupTestData(page);
 
     // サイドバーを更新（リフレッシュボタン）
     await page.click(".refresh-btn");
     await page.waitForTimeout(1000);
 
-    // test_e2e テーブルをクリック
-    const tableItem = page.locator(".table-item", { hasText: "test_e2e" });
-    await tableItem.click();
+    // test_e2e テーブルをダブルクリック
+    const tableLabel = page.locator(".table-label", { hasText: "test_e2e" });
+    await tableLabel.dblclick();
     await page.waitForTimeout(500);
 
     // エディタに SELECT 文が入っている

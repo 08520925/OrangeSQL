@@ -44,6 +44,18 @@ function cancelEdit(): void {
   editing.value = false;
 }
 
+function setNull(): void {
+  editing.value = false;
+  emit("setNull");
+}
+
+function handleBlur(e: FocusEvent): void {
+  // NULLボタンへのフォーカス移動時は確定しない
+  const related = e.relatedTarget as HTMLElement | null;
+  if (related?.classList.contains("null-btn")) return;
+  confirmEdit();
+}
+
 function handleKeydown(e: KeyboardEvent): void {
   if (e.key === "Enter") {
     confirmEdit();
@@ -51,8 +63,7 @@ function handleKeydown(e: KeyboardEvent): void {
     cancelEdit();
   } else if (e.ctrlKey && e.shiftKey && e.key === "N") {
     e.preventDefault();
-    editing.value = false;
-    emit("setNull");
+    setNull();
   }
 }
 </script>
@@ -66,14 +77,20 @@ function handleKeydown(e: KeyboardEvent): void {
     }"
     @dblclick="startEdit"
   >
-    <input
-      v-if="editing"
-      ref="inputRef"
-      v-model="editValue"
-      class="cell-input"
-      @blur="confirmEdit"
-      @keydown="handleKeydown"
-    />
+    <div v-if="editing" class="edit-container">
+      <input
+        ref="inputRef"
+        v-model="editValue"
+        class="cell-input"
+        @blur="handleBlur"
+        @keydown="handleKeydown"
+      />
+      <button
+        class="null-btn"
+        title="NULLを設定 (Ctrl+Shift+N)"
+        @mousedown.prevent="setNull"
+      >NULL</button>
+    </div>
     <template v-else>
       <span class="cell-text">{{ value === null ? 'NULL' : value }}</span>
       <button v-if="isLongText" class="expand-btn" @click.stop="openDetail">…</button>
@@ -129,8 +146,15 @@ td {
   background: #3d3000;
 }
 
+.edit-container {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .cell-input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 2px 4px;
   background: #1a1a2e;
   border: 1px solid #007acc;
@@ -140,4 +164,19 @@ td {
   box-sizing: border-box;
   outline: none;
 }
+
+.null-btn {
+  padding: 1px 4px;
+  background: #5a4000;
+  color: #e0a030;
+  border: 1px solid #7a6020;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.null-btn:hover { background: #7a5500; }
 </style>

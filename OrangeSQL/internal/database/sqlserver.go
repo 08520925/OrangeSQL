@@ -78,7 +78,8 @@ func (s *SQLServer) Columns(tableName string) ([]ColumnInfo, error) {
 			c.COLUMN_NAME,
 			c.DATA_TYPE,
 			CASE WHEN c.IS_NULLABLE = 'NO' THEN 1 ELSE 0 END,
-			CASE WHEN kcu.COLUMN_NAME IS NOT NULL THEN 1 ELSE 0 END
+			CASE WHEN kcu.COLUMN_NAME IS NOT NULL THEN 1 ELSE 0 END,
+			COALESCE(ep.value, '')
 		FROM INFORMATION_SCHEMA.COLUMNS c
 		LEFT JOIN INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
 			ON tc.TABLE_NAME = c.TABLE_NAME
@@ -88,6 +89,10 @@ func (s *SQLServer) Columns(tableName string) ([]ColumnInfo, error) {
 			ON kcu.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
 			AND kcu.TABLE_SCHEMA = tc.TABLE_SCHEMA
 			AND kcu.COLUMN_NAME = c.COLUMN_NAME
+		LEFT JOIN sys.extended_properties ep
+			ON ep.major_id = OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME)
+			AND ep.minor_id = c.ORDINAL_POSITION
+			AND ep.name = 'MS_Description'
 		WHERE c.TABLE_NAME = @p1
 		ORDER BY c.ORDINAL_POSITION
 	`, tableName)
@@ -99,7 +104,7 @@ func (s *SQLServer) Columns(tableName string) ([]ColumnInfo, error) {
 	var columns []ColumnInfo
 	for rows.Next() {
 		var col ColumnInfo
-		if err := rows.Scan(&col.Name, &col.Type, &col.NotNull, &col.PK); err != nil {
+		if err := rows.Scan(&col.Name, &col.Type, &col.NotNull, &col.PK, &col.Comment); err != nil {
 			return nil, err
 		}
 		columns = append(columns, col)
