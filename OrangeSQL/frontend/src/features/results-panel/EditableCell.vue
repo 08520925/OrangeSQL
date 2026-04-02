@@ -50,6 +50,8 @@ function setNull(): void {
 }
 
 function handleBlur(e: FocusEvent): void {
+  // setNull() で editing が既に false なら何もしない（confirmEdit の二重発火防止）
+  if (!editing.value) return;
   // NULLボタンへのフォーカス移動時は確定しない
   const related = e.relatedTarget as HTMLElement | null;
   if (related?.classList.contains("null-btn")) return;
@@ -61,7 +63,7 @@ function handleKeydown(e: KeyboardEvent): void {
     confirmEdit();
   } else if (e.key === "Escape") {
     cancelEdit();
-  } else if (e.ctrlKey && e.shiftKey && e.key === "N") {
+  } else if (e.altKey && e.key === "n") {
     e.preventDefault();
     setNull();
   }
@@ -87,7 +89,7 @@ function handleKeydown(e: KeyboardEvent): void {
       />
       <button
         class="null-btn"
-        title="NULLを設定 (Ctrl+Shift+N)"
+        title="NULLを設定 (Alt+N)"
         @mousedown.prevent="setNull"
       >NULL</button>
     </div>

@@ -260,5 +260,11 @@ tr:hover td {
 .col-name-cell { color: #cccccc; font-weight: 600; }
 .col-type-cell { color: #6a9955; }
 .check-cell { text-align: center; color: #4ec9b0; }
-.comment-cell { color: #999999; }
+.comment-cell {
+  color: #999999;
+  white-space: normal;
+  max-width: 500px;
+  overflow: visible;
+  text-overflow: clip;
+}
 </style>

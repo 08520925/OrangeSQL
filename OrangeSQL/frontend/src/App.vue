@@ -73,8 +73,14 @@ function handleSelectTable(tableName: string): void {
   const sql = activeProfile?.driver === "sqlserver"
     ? `SELECT TOP 100 * FROM ${tableName};`
     : `SELECT * FROM ${tableName} LIMIT 100;`;
-  editorRef.value?.setValue(sql);
-  updateSql(sql);
+  // テーブル情報タブだった場合、結果をリセットしてエディタを表示させる
+  if (state.value.kind === "tableInfo") {
+    state.value = { kind: "idle" };
+  }
+  void nextTick(() => {
+    editorRef.value?.setValue(sql);
+    updateSql(sql);
+  });
 }
 
 async function handleShowTableInfo(tableName: string): Promise<void> {
@@ -188,10 +194,12 @@ function statusText(): string {
         />
       </aside>
       <div class="content-area">
-        <div class="editor-area" :style="{ flex: `0 0 ${editorRatio * 100}%` }">
-          <SqlEditor ref="editorRef" @execute="handleExecute" />
-        </div>
-        <ResizeHandle @mousedown="onMouseDown" />
+        <template v-if="state.kind !== 'tableInfo'">
+          <div class="editor-area" :style="{ flex: `0 0 ${editorRatio * 100}%` }">
+            <SqlEditor ref="editorRef" @execute="handleExecute" />
+          </div>
+          <ResizeHandle @mousedown="onMouseDown" />
+        </template>
         <div class="results-area">
           <ResultsPanel
             :state="state"

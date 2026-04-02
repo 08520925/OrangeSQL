@@ -155,7 +155,7 @@ async function handleSave(): Promise<void> {
                   :placeholder="isPKColumn(ci) ? '(自動)' : newRow.values[ci] === null ? 'NULL' : ''"
                   :value="newRow.values[ci] === null ? '' : (newRow.values[ci] ?? '')"
                   @input="(e: Event) => updateNewRowCell(nri, ci, (e.target as HTMLInputElement).value || null)"
-                  @keydown.ctrl.shift.n.prevent="handleNewRowSetNull(nri, ci)"
+                  @keydown.alt.n.prevent="handleNewRowSetNull(nri, ci)"
                 />
                 <button
                   v-if="!isPKColumn(ci)"

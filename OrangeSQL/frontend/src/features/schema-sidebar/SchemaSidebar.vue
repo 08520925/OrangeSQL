@@ -15,6 +15,26 @@ const emit = defineEmits<{
 }>();
 
 const expanded = ref<Record<string, ColumnEntry[]>>({});
+let clickTimer: ReturnType<typeof setTimeout> | null = null;
+
+function handleClick(tableName: string): void {
+  if (clickTimer != null) {
+    clearTimeout(clickTimer);
+    clickTimer = null;
+  }
+  clickTimer = setTimeout(() => {
+    clickTimer = null;
+    emit("showTableInfo", tableName);
+  }, 250);
+}
+
+function handleDblClick(tableName: string): void {
+  if (clickTimer != null) {
+    clearTimeout(clickTimer);
+    clickTimer = null;
+  }
+  emit("selectTable", tableName);
+}
 
 async function toggleExpand(tableName: string): Promise<void> {
   if (tableName in expanded.value) {
@@ -46,8 +66,8 @@ async function toggleExpand(tableName: string): Promise<void> {
           </button>
           <span
             class="table-label"
-            @click="emit('showTableInfo', table.name)"
-            @dblclick.prevent="emit('selectTable', table.name)"
+            @click="handleClick(table.name)"
+            @dblclick.prevent="handleDblClick(table.name)"
           >
             <span class="table-icon">{{ table.type === 'view' ? '👁' : '▦' }}</span>
             <span class="table-name">{{ table.name }}</span>
